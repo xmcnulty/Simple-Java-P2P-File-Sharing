@@ -1,5 +1,7 @@
 package protocols.bittorrent.metainfo;
 
+import java.io.IOException;
+
 /**
  * Created by Xavier on 4/24/17.
  */
@@ -15,5 +17,18 @@ public class Tester {
         Metainfo m = new Metainfo("http://test.com", iDict);
 
         System.out.println(m.JSON);
+
+        System.out.println(m.writeToFile());
+
+        Metainfo mFile = null;
+        try {
+            mFile = new Metainfo("test-file.jtorrent");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println(mFile.JSON);
     }
 }

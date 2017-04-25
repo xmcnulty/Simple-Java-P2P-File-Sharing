@@ -1,5 +1,6 @@
 package protocols.bittorrent.metainfo;
 
+import java.io.Serializable;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
@@ -11,7 +12,7 @@ import java.util.Hashtable;
  * @author Xavier McNulty
  * Created by Xavier on 4/24/17.
  */
-final class InfoDictionary {
+final class InfoDictionary implements Serializable {
     // KEY-VALUES
     public static final String LENGTH_KEY = "length",
         NAME_KEY = "name", PIECE_LENGTH_KEY = "piece length",
