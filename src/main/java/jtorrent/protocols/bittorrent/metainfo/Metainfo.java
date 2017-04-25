@@ -68,7 +68,7 @@ public final class Metainfo implements Serializable {
      */
     public String writeToFile() {
         Dictionary<String, Object> info = (Dictionary<String, Object>) META_INFO.get(INFO_KEY);
-        String fileName = (String) info.get(InfoDictionary.NAME_KEY) + ".jmeta";
+        String fileName = (String) info.get(InfoDictionary.NAME_KEY) + ".jtorrent";
 
         try (ObjectOutputStream write = new ObjectOutputStream(new FileOutputStream(fileName))) {
             write.writeObject(this);

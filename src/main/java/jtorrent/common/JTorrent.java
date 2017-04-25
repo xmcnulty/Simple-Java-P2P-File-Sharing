@@ -49,6 +49,17 @@ public final class JTorrent {
     }
 
     /**
+     * Creates a JTorrent object from a file containing a Metainfo object.
+     * @param file Path to a .jmeta file.
+     * @param seeder Whether this file will be seeded or not
+     * @return JTorrent created from file.
+     */
+    public static JTorrent load(String file, boolean seeder) throws IOException,
+            ClassNotFoundException, URISyntaxException, NoSuchAlgorithmException {
+        return new JTorrent(new Metainfo(file), seeder);
+    }
+
+    /**
      * Gets the SHA-1 hash of metainfo.info.
      * @param data Byte array of serialized InfoDictionary from metainfo.
      * @return SHA-1 hash of data.
@@ -61,5 +72,13 @@ public final class JTorrent {
         crypt.update(data);
 
         return crypt.digest();
+    }
+
+    /**
+     * Writes the metainfo to a file
+     * @return Path the saved file.
+     */
+    public String save() {
+        return metainfo.writeToFile();
     }
 }

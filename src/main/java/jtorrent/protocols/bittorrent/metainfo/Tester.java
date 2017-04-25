@@ -22,7 +22,7 @@ public class Tester {
 
         Metainfo mFile = null;
         try {
-            mFile = new Metainfo("test-file.jmeta");
+            mFile = new Metainfo("test-file.jtorrent");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
