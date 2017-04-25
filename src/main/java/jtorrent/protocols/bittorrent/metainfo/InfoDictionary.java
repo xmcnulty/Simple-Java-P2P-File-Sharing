@@ -1,4 +1,4 @@
-package protocols.bittorrent.metainfo;
+package jtorrent.protocols.bittorrent.metainfo;
 
 import java.io.Serializable;
 import java.util.Dictionary;
@@ -12,7 +12,7 @@ import java.util.Hashtable;
  * @author Xavier McNulty
  * Created by Xavier on 4/24/17.
  */
-final class InfoDictionary implements Serializable {
+public final class InfoDictionary implements Serializable {
     // KEY-VALUES
     public static final String LENGTH_KEY = "length",
         NAME_KEY = "name", PIECE_LENGTH_KEY = "piece length",
@@ -25,13 +25,13 @@ final class InfoDictionary implements Serializable {
      * @param length Length of the file in bytes.
      * @param name String containing the name of the file.
      * @param piece_length An integer indicating the number of bytes in each piece.
-     * @param pieces An String array containing the 20-byte SHA1 hash values for all the pieces
+     * @param pieces An array of byte arrays containing the 20-byte SHA1 hash values for all the pieces
      *               of the torrent. The hash of the first piece is at index 0.
      */
     public InfoDictionary(Integer length,
                           String name,
                           Integer piece_length,
-                          String[] pieces) {
+                          byte[][] pieces) {
         INFO = new Hashtable<>();
 
         INFO.put(LENGTH_KEY, length);
