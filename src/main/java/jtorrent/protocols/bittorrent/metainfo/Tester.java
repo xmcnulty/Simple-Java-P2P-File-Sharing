@@ -1,4 +1,4 @@
-package protocols.bittorrent.metainfo;
+package jtorrent.protocols.bittorrent.metainfo;
 
 import java.io.IOException;
 
@@ -7,7 +7,7 @@ import java.io.IOException;
  */
 public class Tester {
     public static void main(String args[]) {
-        String[] hashes = {"432344", "3333124"};
+        byte[][] hashes = {{(byte) 0xfe}};
 
         InfoDictionary iDict = new InfoDictionary(100,
                 "test-file",
@@ -22,7 +22,7 @@ public class Tester {
 
         Metainfo mFile = null;
         try {
-            mFile = new Metainfo("test-file.jtorrent");
+            mFile = new Metainfo("test-file.jmeta");
         } catch (IOException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {

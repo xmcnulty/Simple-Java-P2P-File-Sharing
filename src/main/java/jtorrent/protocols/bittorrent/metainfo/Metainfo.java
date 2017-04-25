@@ -1,4 +1,4 @@
-package protocols.bittorrent.metainfo;
+package jtorrent.protocols.bittorrent.metainfo;
 
 import com.google.gson.Gson;
 
@@ -15,12 +15,13 @@ import java.util.Hashtable;
  * @author Xavier McNulty
  * Created by Xavier on 4/24/17.
  */
-final class Metainfo implements Serializable {
+public final class Metainfo implements Serializable {
     // Keys for dictionary.
     public static final String ANNOUNCE_KEY = "announce",
         INFO_KEY = "info";
 
     private final Dictionary<String, Object> META_INFO;
+    private final InfoDictionary INFO_DICTIONARY;
     public final String JSON;
 
     /**
@@ -31,8 +32,10 @@ final class Metainfo implements Serializable {
     public Metainfo(String announce, InfoDictionary info) {
         META_INFO = new Hashtable<>();
 
+        INFO_DICTIONARY = info;
+
         META_INFO.put(ANNOUNCE_KEY, announce);
-        META_INFO.put(INFO_KEY, info.get());
+        META_INFO.put(INFO_KEY, INFO_DICTIONARY.get());
 
         JSON = (new Gson()).toJson(META_INFO);
     }
@@ -48,6 +51,15 @@ final class Metainfo implements Serializable {
 
         META_INFO = fromFile.META_INFO;
         JSON = fromFile.JSON;
+        INFO_DICTIONARY = fromFile.INFO_DICTIONARY;
+    }
+
+    /**
+     * Returns the info of this metafile.
+     * @return InfoDictionary object that contains the info of this file.
+     */
+    public InfoDictionary getInfo() {
+        return INFO_DICTIONARY;
     }
 
     /**
@@ -56,7 +68,7 @@ final class Metainfo implements Serializable {
      */
     public String writeToFile() {
         Dictionary<String, Object> info = (Dictionary<String, Object>) META_INFO.get(INFO_KEY);
-        String fileName = (String) info.get(InfoDictionary.NAME_KEY) + ".jtorrent";
+        String fileName = (String) info.get(InfoDictionary.NAME_KEY) + ".jmeta";
 
         try (ObjectOutputStream write = new ObjectOutputStream(new FileOutputStream(fileName))) {
             write.writeObject(this);
@@ -66,6 +78,15 @@ final class Metainfo implements Serializable {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    /**
+     * Retrieves the tracker for this torrent. Held in the dictionary under
+     * the announce key.
+     * @return String URL of the tracker.
+     */
+    public String getTracker() {
+        return (String) META_INFO.get(ANNOUNCE_KEY);
     }
 
     /**
