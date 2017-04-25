@@ -38,4 +38,8 @@ final class InfoDictionary {
         INFO.put(PIECE_LENGTH_KEY, piece_length);
         INFO.put(PIECES_KEY, pieces);
     }
+
+    public Dictionary<String, Object> get() {
+        return INFO;
+    }
 }

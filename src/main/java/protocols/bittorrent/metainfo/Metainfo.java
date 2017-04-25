@@ -31,7 +31,7 @@ final class Metainfo {
         META_INFO = new Hashtable<>();
 
         META_INFO.put(ANNOUNCE_KEY, announce);
-        META_INFO.put(INFO_KEY, info);
+        META_INFO.put(INFO_KEY, info.get());
 
         JSON_STR = (new Gson()).toJson(META_INFO);
     }
