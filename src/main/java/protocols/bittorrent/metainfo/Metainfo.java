@@ -20,7 +20,7 @@ final class Metainfo {
         INFO_KEY = "info";
 
     private final Dictionary<String, Object> META_INFO;
-    public final String JSON_STR;
+    public final String JSON;
 
     /**
      * Creates Metainfo for a torrent, only containing the fields required by BTP/1.0.
@@ -33,6 +33,6 @@ final class Metainfo {
         META_INFO.put(ANNOUNCE_KEY, announce);
         META_INFO.put(INFO_KEY, info.get());
 
-        JSON_STR = (new Gson()).toJson(META_INFO);
+        JSON = (new Gson()).toJson(META_INFO);
     }
 }

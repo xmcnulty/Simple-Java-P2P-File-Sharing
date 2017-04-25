@@ -14,6 +14,6 @@ public class Tester {
 
         Metainfo m = new Metainfo("http://test.com", iDict);
 
-        System.out.println(m.JSON_STR);
+        System.out.println(m.JSON);
     }
 }
