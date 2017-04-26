@@ -16,7 +16,7 @@ import java.security.NoSuchAlgorithmException;
  * @author Xavier McNulty
  * Created by Xavier on 4/25/17.
  */
-public final class JTorrent {
+public class JTorrent {
     private final Metainfo metainfo;
     private final boolean seeder;
 

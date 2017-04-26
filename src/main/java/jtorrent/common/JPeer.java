@@ -2,6 +2,8 @@ package jtorrent.common;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.Dictionary;
+import java.util.Hashtable;
 
 /**
  * Basic implementation of a java BitTorrent peer.
@@ -61,6 +63,14 @@ public class JPeer {
         return String.format("%d:%s", address.getAddress(), address.getPort());
     }
 
+    public String getIp() {
+        return address.getAddress().getHostAddress();
+    }
+
+    public int getPort() {
+        return address.getPort();
+    }
+
     /**
      * Sets the peerId of this peer.
      * @param peerId ByteBuffer that is the id of this peer.
@@ -73,5 +83,22 @@ public class JPeer {
             this.peerId = peerId;
             this.peerIdHex = Utils.bytesToHex(this.peerId.array());
         }
+    }
+
+    /**
+     * Dictionary of values that are used when sending a reply to an announce
+     * from the tracker. This data contains the peer id, ip and port.
+     * @return Dictionary containing id, ip and port
+     */
+    public Dictionary<String, Object> getReplyData() {
+        Dictionary<String, Object> replyData = new Hashtable<>();
+
+        if (peerId != null)
+            replyData.put("peer id", peerId.array());
+
+        replyData.put("ip", getIp());
+        replyData.put("port", getPort());
+
+        return replyData;
     }
 }
