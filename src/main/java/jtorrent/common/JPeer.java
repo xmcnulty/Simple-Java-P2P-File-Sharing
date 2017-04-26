@@ -71,6 +71,10 @@ public class JPeer {
         return address.getPort();
     }
 
+    public String getPeerIdHex() {
+        return peerIdHex;
+    }
+
     /**
      * Sets the peerId of this peer.
      * @param peerId ByteBuffer that is the id of this peer.

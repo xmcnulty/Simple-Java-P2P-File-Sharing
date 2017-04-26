@@ -82,6 +82,17 @@ public class JTrackedPeer extends JPeer {
     }
 
     /**
+     * Checks if a peer has announced itself to the tracker within the maximum refresh time.
+     * @return true if fresh
+     */
+    public boolean isFresh() {
+        if (lastAnnounce == null)
+            return false;
+
+        return lastAnnounce.getTime() + (REFRESH_TIME_SECONDS * 1000) > new Date().getTime();
+    }
+
+    /**
      * Tells if this peer is finished downloading and can become a seeder.
      * @return True if download is finished.
      */
