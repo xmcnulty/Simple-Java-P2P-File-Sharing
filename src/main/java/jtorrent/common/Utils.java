@@ -1,5 +1,8 @@
 package jtorrent.common;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
 /**
  * Class filled with static utility methods.
  *
@@ -28,5 +31,20 @@ public final class Utils {
             hexChars[j * 2 + 1] = HEX_CHARS[v & 0x0F];
         }
         return new String(hexChars);
+    }
+
+    /**
+     * Gets the SHA-1 hash of metainfo.info.
+     * @param data Byte array of serialized InfoDictionary from metainfo.
+     * @return SHA-1 hash of data.
+     * @throws NoSuchAlgorithmException
+     */
+    public static byte[] hash(byte [] data) throws NoSuchAlgorithmException {
+        MessageDigest crypt;
+        crypt = MessageDigest.getInstance("SHA-1");
+        crypt.reset();
+        crypt.update(data);
+
+        return crypt.digest();
     }
 }

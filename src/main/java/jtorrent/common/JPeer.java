@@ -1,10 +1,8 @@
 package jtorrent.common;
 
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.Objects;
 
 /**
  * Basic implementation of a java BitTorrent peer.
@@ -13,55 +11,45 @@ import java.util.Objects;
  * Created by Xavier on 4/25/17.
  */
 public class JPeer {
+
+    /**
+     * Possible states for a peer exchanging on this torrent.
+     * STARTED is the state when a Peer has announced itself and is about
+     *  to start exchanching data with other peers.
+     * COMPLETED is the state of when a peer when it has finished downloading the file.
+     * STOPPED  is the state when a is the state right before a peer is removed from a swarm.
+     */
+    protected enum State {
+        NONE,
+        STARTED,
+        COMPLETED,
+        STOPPED
+    }
+
     private final InetSocketAddress address;
 
-    private ByteBuffer peerId;
-    private String peerIdHex; // Hex string representation of peerId
+    private String peerId;
+    protected State state; // current state of this peer.
 
-    /**
-     * Create a new Peer.
-     * @param address InetSocketAddress for this peer.
-     */
-    public JPeer(InetSocketAddress address) {
-        this(address, null);
+    public JPeer(String ip, int port, byte[] id) {
+        if (id == null || id.length != 20)
+            throw new IllegalArgumentException("Peer id must be 20 bytes.");
+
+        address = new InetSocketAddress(ip, port);
+        peerId = Utils.bytesToHex(id);
     }
 
     /**
-     * Create a new Peer.
-     * @param address IP address for this peer.
-     * @param port Port that this peer will listen for HTTP messages.
+     * String representation of this peer.
+     * @return String of this peer in the format
+     *  Peer [%id] at %ip:%port.
      */
-    public JPeer(String address, int port) {
-        this(new InetSocketAddress(address, port), null);
-    }
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder().append("Peer [").append(peerId)
+                .append("] at ").append(getIp()).append(":").append(getPort());
 
-    /**
-     * Create a new Peer.
-     * @param address IP address for this peer.
-     * @param port Port that this peer will take incoming HTTP messages.
-     * @param peerId ByteBuffer, unique identifier for this peer.
-     */
-    public JPeer(String address, int port, ByteBuffer peerId) {
-        this(new InetSocketAddress(address, port), peerId);
-    }
-
-    /**
-     * Create a new peer with address and peerId.
-     * @param address InetSocketAddress for this peer.
-     * @param peerId Unique ByteBuffer peer id.
-     */
-    public JPeer(InetSocketAddress address, ByteBuffer peerId) {
-        this.address = address;
-
-        setPeerId(peerId);
-    }
-
-    /**
-     * Returns the host identifier of this peer.
-     * @return String identifier of this peer (ip:port).
-     */
-    public final String getHostId() {
-        return String.format("%d:%s", address.getAddress(), address.getPort());
+        return builder.toString();
     }
 
     public String getIp() {
@@ -72,22 +60,15 @@ public class JPeer {
         return address.getPort();
     }
 
-    public String getPeerIdHex() {
-        return peerIdHex;
+    public String getPeerId() {
+        return peerId;
     }
 
-    /**
-     * Sets the peerId of this peer.
-     * @param peerId ByteBuffer that is the id of this peer.
-     */
-    public void setPeerId(ByteBuffer peerId) {
-        if (peerId == null) {
-            this.peerId = null;
-            this.peerIdHex = null;
-        } else {
-            this.peerId = peerId;
-            this.peerIdHex = Utils.bytesToHex(this.peerId.array());
-        }
+    public void setPeerId(byte[] id) {
+        if (id == null || id.length != 20)
+            throw new IllegalArgumentException("Peer id must be 20 bytes.");
+
+        peerId = Utils.bytesToHex(id);
     }
 
     /**
@@ -99,7 +80,7 @@ public class JPeer {
         Dictionary<String, Object> replyData = new Hashtable<>();
 
         if (peerId != null)
-            replyData.put("peer id", peerId.array());
+            replyData.put("peer id", peerId);
 
         replyData.put("ip", getIp());
         replyData.put("port", getPort());
@@ -108,7 +89,7 @@ public class JPeer {
     }
 
     /**
-     * Compares the equality of JPeers based on IP, port and ID.
+     * Compares the equality of JPeers based on peer id.
      * @param obj JPeer to compare to this.
      * @return true if equal.
      */
@@ -119,6 +100,6 @@ public class JPeer {
 
         JPeer p = (JPeer) obj;
 
-        return getHostId().equals(p.getHostId()) && (peerId == null) || peerId.equals(p.peerId);
+        return peerId == p.peerId;
     }
 }
