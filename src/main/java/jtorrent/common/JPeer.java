@@ -4,6 +4,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.Objects;
 
 /**
  * Basic implementation of a java BitTorrent peer.
@@ -104,5 +105,20 @@ public class JPeer {
         replyData.put("port", getPort());
 
         return replyData;
+    }
+
+    /**
+     * Compares the equality of JPeers based on IP, port and ID.
+     * @param obj JPeer to compare to this.
+     * @return true if equal.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof JPeer))
+            return false;
+
+        JPeer p = (JPeer) obj;
+
+        return getHostId().equals(p.getHostId()) && (peerId == null) || peerId.equals(p.peerId);
     }
 }

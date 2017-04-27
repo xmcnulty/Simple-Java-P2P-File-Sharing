@@ -3,9 +3,11 @@ package jtorrent.tracker;
 import jtorrent.common.JPeer;
 import jtorrent.common.JTorrent;
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
+import jtorrent.protocols.bittorrent.metainfo.thp.Event;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.HashSet;
@@ -108,7 +110,27 @@ public class JTrackedTorrent extends JTorrent {
                 peers.remove(p.getPeerIdHex());
     }
 
-    // TODO: Need a method to update the state of the torrent swarm as individual peer states change.
+
+    public JTrackedTorrent receivedAnnounce(Event event, ByteBuffer peerId, String hexPeerId,
+                                            String ip, int port, long uploaded, long downloaded,
+                                            long left) {
+        JTrackedPeer peer;
+        JTrackedPeer.JPeerState state = JTrackedPeer.JPeerState.UKNOWN;
+
+        switch (event) {
+            case STARTED: // this is a new peer to the swarm
+                peer = new JTrackedPeer(this, ip, port, peerId);
+                state = JTrackedPeer.JPeerState.STARTED;
+                addPeer(peer);
+                break;
+            case STOPPED: // peer has stopped transacting on this torrent.
+                peer = removePeer(hexPeerId);
+                state = JTrackedPeer.JPeerState.STOPPED;
+                break;
+            case COMPLETED:
+
+        }
+    }
 
     /**
      * Gets a list of peers than can be sent in a response message to an announce sent by a peer in the swarm.
@@ -122,7 +144,19 @@ public class JTrackedTorrent extends JTorrent {
         int responsePeerCount = 0;
 
         for (JTrackedPeer p : candidatePeers) {
-            // TODO: Fill this, build a list of valid peers to send in an announce response.
+            responsePeerCount ++;
+
+            if (responsePeerCount > answerPeers)
+                break;
+
+            if (p.equals(peer)) // can't respond to itself (this)
+                continue;
+
+            if (!p.isFresh()) { // don't send unfresh peers
+                candidatePeers.remove(p.getPeerIdHex());
+            }
+
+            responsePeers.add(p);
         }
 
         return responsePeers;
