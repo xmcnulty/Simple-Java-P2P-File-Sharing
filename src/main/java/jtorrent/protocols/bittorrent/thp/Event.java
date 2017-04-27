@@ -1,4 +1,4 @@
-package jtorrent.protocols.bittorrent.metainfo.thp;
+package jtorrent.protocols.bittorrent.thp;
 
 /**
  * Events that are possible in an announce message.

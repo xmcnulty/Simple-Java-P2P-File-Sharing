@@ -2,11 +2,13 @@ package jtorrent.tracker;
 
 import jtorrent.common.JPeer;
 import jtorrent.common.JTorrent;
+import jtorrent.common.Utils;
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,7 +69,7 @@ public class JTracker {
          * @param bytesLeft New number of bytes left.
          */
         public void update(State newState, long bytesUploaded, long bytesDowloaded, long bytesLeft) {
-            state = bytesLeft == 0 ? State.COMPLETED : newState;
+            state = (bytesLeft == 0 && newState == State.STARTED) ? State.COMPLETED : newState;
             this.bytesDowloaded = bytesDowloaded;
             this.bytesUploaded = bytesUploaded;
             this.bytesLeft = bytesLeft;
@@ -96,8 +98,8 @@ public class JTracker {
         }
 
         // add a peer to this torrent
-        public void addPeer(PeerRef peer) {
-            PEERS.put(peer.getPeerId(), peer);
+        public PeerRef addPeer(PeerRef peer) {
+            return PEERS.put(peer.getPeerId(), peer);
         }
 
         // Get a peer by id.
@@ -117,12 +119,90 @@ public class JTracker {
                     PEERS.remove(p.getPeerId());
         }
 
-        public void update() {
-            throw new UnsupportedOperationException();
+        /**
+         * This is called when a peer sends the tracker a started message, effectively starting
+         * that peer's interaction with this torrent.
+         * @param ip IP address of the peer.
+         * @param port Port of the peer.
+         * @param id Peer's id.
+         * @param uploaded Bytes uploaded by peer.
+         * @param downloaded Bytes downloaded by peer.
+         * @param left Bytes left to download by peer.
+         * @return New tracker reference to the peer.
+         */
+        public PeerRef peerStarted(String ip, int port, String id, long uploaded, long downloaded, long left) {
+            PeerRef p = new PeerRef(this, ip, port, Utils.hexStringToByteArray(id));
+            p.update(JPeer.State.STARTED, uploaded, downloaded, left);
+
+            return addPeer(p);
         }
 
-        public Collection<JPeer> getValidPeers() {
-            throw new UnsupportedOperationException();
+        /**
+         * This is called when a peer sends the tracker a stopped message, ceasing that peer's
+         * use of this torrent.
+         * @param id Peer's id.
+         * @param uploaded Bytes uploaded by peer.
+         * @param downloaded Bytes downloaded by peer.
+         * @param left Bytes left to download by peer.
+         * @return New tracker reference to the peer.
+         */
+        public PeerRef peerStopped(String id, long uploaded, long downloaded, long left) {
+            PeerRef p = removePeer(id);
+            p.update(JPeer.State.STOPPED, uploaded, downloaded, left);
+
+            return p;
+        }
+
+        /**
+         * Called when a peer sends a completed announce to the tracker
+         * @param id Peer's id.
+         * @param uploaded Bytes uploaded by peer.
+         * @param downloaded Bytes downloaded by peer.
+         * @param left Bytes left to download by peer.
+         */
+        public void peerCompleted(String id, long uploaded, long downloaded, long left) {
+            getPeer(id).update(JPeer.State.COMPLETED, uploaded, downloaded, left);
+        }
+
+        /**
+         * Default behavior of an announce with an empty action state. Updates the
+         * peer and sets its state to started
+         * @param id Peer's id.
+         * @param uploaded Bytes uploaded by peer.
+         * @param downloaded Bytes downloaded by peer.
+         * @param left Bytes left to download by peer.
+         */
+        public void peerDefaultAnnounce(String id, long uploaded, long downloaded, long left) {
+            try {
+                getPeer(id).update(JPeer.State.STARTED, uploaded, downloaded, left);
+            } catch (NullPointerException e) {
+                return;
+            }
+        }
+
+        /**
+         * Returns a list of unexpired seeders on this torrent. Used to send a response to a
+         * given peer.
+         *
+         * @return Unexpired seeders on this torrent.
+         */
+        public Collection<JPeer> getValidPeers(PeerRef requestingPeer) {
+            ArrayList<JPeer> validPeers = new ArrayList<>();
+
+            for (PeerRef p : PEERS.values()) {
+                if (p.equals(requestingPeer)) // don't return this peer
+                    continue;
+
+                if (p.isExpired()) {// peer is expired and should be removed.
+                    removePeer(p.getPeerId());
+                    continue;
+                }
+
+                if (p.bytesLeft == 0) // peer needs to have all of the file
+                    validPeers.add(p);
+            }
+
+            return validPeers;
         }
     }
 }

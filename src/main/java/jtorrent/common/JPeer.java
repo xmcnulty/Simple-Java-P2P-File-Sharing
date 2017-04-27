@@ -19,7 +19,7 @@ public class JPeer {
      * COMPLETED is the state of when a peer when it has finished downloading the file.
      * STOPPED  is the state when a is the state right before a peer is removed from a swarm.
      */
-    protected enum State {
+    public enum State {
         NONE,
         STARTED,
         COMPLETED,
