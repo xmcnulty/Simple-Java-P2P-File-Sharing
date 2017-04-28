@@ -2,7 +2,9 @@ package jtorrent.common;
 
 import java.net.InetSocketAddress;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Map;
 
 /**
  * Basic implementation of a java BitTorrent peer.
@@ -86,6 +88,21 @@ public class JPeer {
         replyData.put("port", getPort());
 
         return replyData;
+    }
+
+    /**
+     * Data that is put in a response. Map that contains key-value pairs for
+     * peer_id, ip, and port.
+     * @return
+     */
+    public Map<String, Object> getResponseFields() {
+        Map<String, Object> fieldsMap = new HashMap<>();
+
+        fieldsMap.put("peer_id", peerId);
+        fieldsMap.put("ip", getIp());
+        fieldsMap.put("port", getPort());
+
+        return fieldsMap;
     }
 
     /**

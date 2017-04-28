@@ -10,5 +10,21 @@ public enum Event {
     STARTED,
     STOPPED,
     COMPLETED,
-    NONE
+    NONE;
+
+    /**
+     * Returns an event enumeration from a string.
+     * @param s
+     * @return
+     */
+    public static Event fromString(String s) {
+        if (s.equalsIgnoreCase(STARTED.toString()))
+            return STARTED;
+        else if (s.equalsIgnoreCase(STOPPED.toString()))
+            return STOPPED;
+        else if (s.equalsIgnoreCase(COMPLETED.toString()))
+            return COMPLETED;
+        else
+            return NONE;
+    }
 }

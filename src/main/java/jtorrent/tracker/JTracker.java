@@ -25,7 +25,7 @@ public class JTracker {
     /**
      * A reference to a peer that this tracker is following.
      */
-    private class PeerRef extends JPeer {
+    public class PeerRef extends JPeer {
         // if a peer does not announce itself in this amount of time it will not be used by the tracker.
         private static final int EXPIRE_TIME_SECONDS = 15;
         private Date lastAnnounceTime = null; // set when an announce from this peer is seen
@@ -80,8 +80,9 @@ public class JTracker {
      * A tracker's reference to a torrent. This reference will contain a list of
      * peers that are actively using this torrent.
      */
-    private class TorrentRef extends JTorrent {
+    public class TorrentRef extends JTorrent {
         private final ConcurrentMap<String,PeerRef> PEERS; // Peers actively using this torrent
+        public static final int ANNOUNCE_INTERVAL_SECONDS = 5; // announce interval
 
         /**
          * Creates a new torrent reference to be used by a tracker.
@@ -160,8 +161,11 @@ public class JTracker {
          * @param downloaded Bytes downloaded by peer.
          * @param left Bytes left to download by peer.
          */
-        public void peerCompleted(String id, long uploaded, long downloaded, long left) {
-            getPeer(id).update(JPeer.State.COMPLETED, uploaded, downloaded, left);
+        public PeerRef peerCompleted(String id, long uploaded, long downloaded, long left) {
+            PeerRef p = getPeer(id);
+            p.update(JPeer.State.COMPLETED, uploaded, downloaded, left);
+
+            return p;
         }
 
         /**
@@ -172,12 +176,11 @@ public class JTracker {
          * @param downloaded Bytes downloaded by peer.
          * @param left Bytes left to download by peer.
          */
-        public void peerDefaultAnnounce(String id, long uploaded, long downloaded, long left) {
-            try {
-                getPeer(id).update(JPeer.State.STARTED, uploaded, downloaded, left);
-            } catch (NullPointerException e) {
-                return;
-            }
+        public PeerRef peerDefaultAnnounce(String id, long uploaded, long downloaded, long left) {
+            PeerRef p = getPeer(id);
+            p.update(JPeer.State.STARTED, uploaded, downloaded, left);
+
+            return p;
         }
 
         /**
