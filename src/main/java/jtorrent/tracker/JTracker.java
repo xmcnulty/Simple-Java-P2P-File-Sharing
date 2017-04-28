@@ -67,13 +67,24 @@ public class JTracker {
     }
 
     /**
+     * Gets the full http url of this tracker server.
+     * @return URL formatted as http://ip:port/announce
+     */
+    public final String url() {
+        StringBuilder sb = new StringBuilder("http://").append(ADDRESS.getAddress().getCanonicalHostName())
+                .append(":").append(ADDRESS.getPort()).append("/announce");
+
+        return sb.toString();
+    }
+
+    /**
      * Starts running the tracker server.
      */
     public void start() {
         if (announceThread == null || !announceThread.isAlive()) {
             announceThread = new Thread(() -> {
                 try {
-                    System.out.println("Starting tracker at: " + ADDRESS.toString());
+                    System.out.println("Starting tracker at: " + url());
                     CONNECTION.connect(ADDRESS);
                 } catch (IOException e) {
                     e.printStackTrace();
