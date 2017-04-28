@@ -18,6 +18,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Tracker that keeps track of torrent's and their swarm of peers.
@@ -33,12 +34,16 @@ public class JTracker {
     private Thread announceThread; // thread used to handle
     private Thread peerCleanupThread; // periodically cleans up expired peers
 
+    private final AtomicBoolean stopped;
+
     public JTracker(InetSocketAddress address) throws IOException {
         this.ADDRESS = address;
         TORRENTS = new ConcurrentHashMap<>();
 
         // create the connection. server
         CONNECTION = new SocketConnection(new ContainerSocketProcessor(new AnnounceHandler(TORRENTS)));
+
+        stopped = new AtomicBoolean(false);
 
         peerCleanupThread = new Thread() {
             // TODO: Implement cleanup strategy.
@@ -66,6 +71,8 @@ public class JTracker {
      * Stops the tracker server.
      */
     public void stop() {
+        stopped.set(true);
+
         try {
             CONNECTION.close();
         } catch (IOException e) {
