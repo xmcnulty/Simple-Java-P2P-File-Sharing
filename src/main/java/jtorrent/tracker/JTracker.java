@@ -4,8 +4,13 @@ import jtorrent.common.JPeer;
 import jtorrent.common.JTorrent;
 import jtorrent.common.Utils;
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
+import jtorrent.protocols.bittorrent.thp.AnnounceHandler;
+import org.simpleframework.http.core.ContainerSocketProcessor;
+import org.simpleframework.transport.connect.Connection;
+import org.simpleframework.transport.connect.SocketConnection;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -21,6 +26,52 @@ import java.util.concurrent.ConcurrentMap;
  * Created by Xavier on 4/27/17.
  */
 public class JTracker {
+    private final Connection CONNECTION;
+    private final InetSocketAddress ADDRESS;
+    private final ConcurrentMap<String, TorrentRef> TORRENTS;
+
+    private Thread announceThread; // thread used to handle
+    private Thread peerCleanupThread; // periodically cleans up expired peers
+
+    public JTracker(InetSocketAddress address) throws IOException {
+        this.ADDRESS = address;
+        TORRENTS = new ConcurrentHashMap<>();
+
+        // create the connection. server
+        CONNECTION = new SocketConnection(new ContainerSocketProcessor(new AnnounceHandler(TORRENTS)));
+
+        peerCleanupThread = new Thread() {
+            // TODO: Implement cleanup strategy.
+        };
+    }
+
+    /**
+     * Starts running the tracker server.
+     */
+    public void start() {
+        if (announceThread == null || !announceThread.isAlive()) {
+            announceThread = new Thread(() -> {
+                try {
+                    CONNECTION.connect(ADDRESS);
+                } catch (IOException e) {
+                    this.stop();
+                }
+            }, "tracker-announce-handler");
+
+            announceThread.start();
+        }
+    }
+
+    /**
+     * Stops the tracker server.
+     */
+    public void stop() {
+        try {
+            CONNECTION.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * A reference to a peer that this tracker is following.
