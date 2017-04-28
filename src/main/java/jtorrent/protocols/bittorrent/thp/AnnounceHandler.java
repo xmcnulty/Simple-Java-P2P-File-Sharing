@@ -36,6 +36,7 @@ public class AnnounceHandler implements org.simpleframework.http.core.Container 
 
     @Override
     public void handle(Request request, Response response) {
+        System.out.println("announce received from: " + request.getClientAddress().toString());
         if (!ANNOUNCE_PATH.equals(request.getPath().toString())) {
             response.setCode(404);
             response.setDescription("Not Found");

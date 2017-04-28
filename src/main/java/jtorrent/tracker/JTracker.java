@@ -45,8 +45,24 @@ public class JTracker {
 
         stopped = new AtomicBoolean(false);
 
-        peerCleanupThread = new Thread() {
-            // TODO: Implement cleanup strategy.
+        peerCleanupThread = new Thread("clean-up-thread") {
+            private final int REFRESH_TIME = 15; // refreshes every 15 seconds
+
+            @Override
+            public void run() {
+                while (!stopped.get()) {
+                    System.out.println(this.getName() + " cleaning up.");
+
+                    for (TorrentRef torrent : TORRENTS.values())
+                        torrent.removeExpired();
+
+                    try {
+                        Thread.sleep(REFRESH_TIME * 1000);
+                    } catch (InterruptedException e) {
+                        // ignore
+                    }
+                }
+            }
         };
     }
 
@@ -57,13 +73,19 @@ public class JTracker {
         if (announceThread == null || !announceThread.isAlive()) {
             announceThread = new Thread(() -> {
                 try {
+                    System.out.println("Starting tracker at: " + ADDRESS.toString());
                     CONNECTION.connect(ADDRESS);
                 } catch (IOException e) {
+                    e.printStackTrace();
                     this.stop();
                 }
             }, "tracker-announce-handler");
 
             announceThread.start();
+        }
+
+        if (!peerCleanupThread.isAlive()) {
+            peerCleanupThread.start();
         }
     }
 
@@ -78,6 +100,8 @@ public class JTracker {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        announceThread.interrupt();
     }
 
     /**
