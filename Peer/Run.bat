@@ -1,3 +1,3 @@
 @echo off
-java CloudClient
+java PeerClient
 pause

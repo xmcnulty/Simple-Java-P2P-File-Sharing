@@ -5,18 +5,33 @@ import java.io.*;
 import java.net.*;
 import javax.swing.*;
 
-
+/**
+ * GUI for peer service.
+ * @author Jeffrey Hensel
+ * Peer GUI this is the user level interface
+ */
 public class GUI implements ActionListener{
 	
-	private String CLIENT_NAME = "Cloud Service";
+  // gui string
+	private String CLIENT_NAME = "Peer Service";
+	// IP of major host
 	private String hostName = "127.0.0.1";
-    private int portNumber = 222;
+	// Port to connect on
+  private int portNumber = 222;
+  // List to be made for right list
 	private JList hostList;
+	// Used for host list
 	private DefaultListModel hostLM;
+	// What file to be transfered
 	private File selectedFile;
+	// List string info
 	private String[] hostListInfo;
+	// Refresh button string
 	public static final String refreshTAG = "Refresh List";
 	
+	/**
+	 * Public GUI for the peer service
+	 */
 	public void GUI(){
 		
 		JFrame guiFrame = new JFrame(CLIENT_NAME);
@@ -156,7 +171,12 @@ public class GUI implements ActionListener{
 		return avgMSPing;
 	}
 	
-	
+	/**
+	 * Gets next in from server
+	 * @param prev
+	 * @param in
+	 * @return
+	 */
 	public String getNextResponse(String prev, BufferedReader in){
 		String toRet = "";
 		try {
@@ -165,6 +185,9 @@ public class GUI implements ActionListener{
 		return toRet;
 	}
 	
+	/**
+	 * Update list from main host
+	 */
 	public void updateList(){
 		// Clear the current list
 		for (int i = 0; i < hostLM.size(); i++){
@@ -213,7 +236,9 @@ public class GUI implements ActionListener{
 		}
 	}
 	
-	
+	/**
+	 * Listener for button presses
+	 */
 	public void actionPerformed(ActionEvent e){
 		System.out.println(e.getActionCommand());
 		
