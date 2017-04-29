@@ -48,6 +48,10 @@ public class JTorrent {
         tracker = new URI(metainfo.getTracker());
     }
 
+    public String infoHash() {
+        return Utils.bytesToHex(info_hash);
+    }
+
     /**
      * Writes the metainfo to a file
      * @return Path the saved file.

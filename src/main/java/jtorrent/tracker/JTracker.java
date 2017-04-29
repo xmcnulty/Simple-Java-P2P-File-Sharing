@@ -116,6 +116,33 @@ public class JTracker {
     }
 
     /**
+     * Adds a torrent to this tracker.
+     * @param torrent Torrent
+     */
+    public void addTorrent(Metainfo torrent) {
+        try {
+            TorrentRef torrentRef = new TorrentRef(torrent);
+            TORRENTS.put(torrentRef.infoHash(), torrentRef);
+            System.out.println("Added torrent " + torrent.getName());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Removes a torrent from this tracker.
+     * @param hash
+     * @return
+     */
+    public TorrentRef removeTorrent(String hash) {
+        return TORRENTS.remove(hash);
+    }
+
+    /**
      * A reference to a peer that this tracker is following.
      */
     public class PeerRef extends JPeer {

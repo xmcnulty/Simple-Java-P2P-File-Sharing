@@ -63,12 +63,19 @@ public final class Metainfo implements Serializable {
     }
 
     /**
+     * Gets the name of the file for this torrent.
+     * @return
+     */
+    public String getName() {
+        return (String) getInfo().get().get(InfoDictionary.NAME_KEY);
+    }
+
+    /**
      * Writes this object to a file using the name info.name.
      * @return Name of the file if successful, empty string otherwise.
      */
     public String writeToFile() {
-        Dictionary<String, Object> info = (Dictionary<String, Object>) META_INFO.get(INFO_KEY);
-        String fileName = (String) info.get(InfoDictionary.NAME_KEY) + ".jtorrent";
+        String fileName = getName() + ".jtorrent";
 
         try (ObjectOutputStream write = new ObjectOutputStream(new FileOutputStream(fileName))) {
             write.writeObject(this);
