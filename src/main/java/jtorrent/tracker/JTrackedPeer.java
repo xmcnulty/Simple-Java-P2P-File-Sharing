@@ -82,17 +82,6 @@ public class JTrackedPeer extends JPeer {
     }
 
     /**
-     * Tells whether this peer has checked in with the tracker recently (REFRESH_TIME_SECONDS).
-     *
-     * Non-fresh peers will be terminated by the tracker.
-     * @return true if the peer has checked in with the tracker with in REFRESH_TIME_SECONDS.
-     */
-    public boolean isFresh() {
-        return (this.lastAnnounce != null &&
-                (this.lastAnnounce.getTime() + (REFRESH_TIME_SECONDS * 1000) > new Date().getTime()));
-    }
-
-    /**
      * Tells if this peer is finished downloading and can become a seeder.
      * @return True if download is finished.
      */
