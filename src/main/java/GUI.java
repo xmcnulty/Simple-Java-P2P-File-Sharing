@@ -11,7 +11,7 @@ import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 public class GUI implements ActionListener{
 	
 	private String CLIENT_NAME = "Peer Service";
-	private String hostName = "127.0.0.1";
+	private String hostName = "http://10.21.76.195:4930/new_torrent";
     private int portNumber = 222;
 	private JList hostList;
 	private DefaultListModel hostLM;
@@ -237,6 +237,7 @@ public class GUI implements ActionListener{
 					try {
 
 				        System.out.println("Creating metainfo");
+				        System.out.println("internet addr: " + InetAddress.getLocalHost().getHostAddress());
 						Metainfo m = Metainfo.createTorrentFromFile(selectedFile, InetAddress.getLocalHost().toString());
 						// Make http request to tracker server
 						URL url = new URL(hostName);
@@ -245,13 +246,19 @@ public class GUI implements ActionListener{
 					    connection.setRequestMethod("POST");
 					    connection.setRequestProperty("Content-Type", 
 					        "application/octet-stream");
+					    connection.setUseCaches(false);
+					    connection.setDoOutput(true);
+					    connection.connect();
 					    
 					    ObjectOutputStream wr = new ObjectOutputStream (
 					            connection.getOutputStream());
 				        wr.writeObject(m);
 				        wr.close();
+				        connection.getResponseMessage();
 				        System.out.println("Sent info");
-					} catch (Exception ex){}
+					} catch (Exception ex){
+					  ex.printStackTrace();
+					}
 				    
 				    
 					System.out.println("getCurrentDirectory(): " + fc.getCurrentDirectory());
