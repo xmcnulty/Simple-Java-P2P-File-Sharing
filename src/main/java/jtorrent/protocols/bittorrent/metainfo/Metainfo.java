@@ -1,8 +1,10 @@
 package jtorrent.protocols.bittorrent.metainfo;
 
 import com.google.gson.Gson;
+import jtorrent.common.Utils;
 
 import java.io.*;
+import java.security.NoSuchAlgorithmException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
@@ -22,7 +24,7 @@ public final class Metainfo implements Serializable {
 
     private final Dictionary<String, Object> META_INFO;
     private final InfoDictionary INFO_DICTIONARY;
-    public final String JSON;
+    private String JSON;
 
     /**
      * Creates Metainfo for a torrent, only containing the fields required by BTP/1.0.
@@ -40,18 +42,13 @@ public final class Metainfo implements Serializable {
         JSON = (new Gson()).toJson(META_INFO);
     }
 
-    /**
-     * Attempts to construct a new Metainfo object from one written to a file.
-     * @param path Path to file containing a written Metainfo object.
-     * @throws IOException
-     * @throws ClassNotFoundException
-     */
-    public Metainfo(String path) throws IOException, ClassNotFoundException {
-        Metainfo fromFile = readFromFile(path);
+    public void setAnnounce(String ipPort) {
+        if (META_INFO.get(ANNOUNCE_KEY) != null)
+            META_INFO.remove(ANNOUNCE_KEY);
 
-        META_INFO = fromFile.META_INFO;
-        JSON = fromFile.JSON;
-        INFO_DICTIONARY = fromFile.INFO_DICTIONARY;
+        META_INFO.put(ANNOUNCE_KEY, ipPort);
+
+        JSON = (new Gson()).toJson(META_INFO);
     }
 
     /**
@@ -61,6 +58,8 @@ public final class Metainfo implements Serializable {
     public InfoDictionary getInfo() {
         return INFO_DICTIONARY;
     }
+
+    public String getJSON() {return JSON;}
 
     /**
      * Gets the name of the file for this torrent.
@@ -87,6 +86,10 @@ public final class Metainfo implements Serializable {
         }
     }
 
+    public void setTracker(String ip) {
+        META_INFO.put(ANNOUNCE_KEY, ip);
+    }
+
     /**
      * Retrieves the tracker for this torrent. Held in the dictionary under
      * the announce key.
@@ -111,5 +114,50 @@ public final class Metainfo implements Serializable {
         in = read.readObject();
 
         return (Metainfo) in;
+    }
+
+    public static Metainfo createTorrentFromFile(File file, String announceIp) throws IOException {
+        final long CHUNK_SIZE_BYTES = 100000; // 100 kb
+
+        if (file == null || file.isDirectory())
+            return null;
+
+        long fileSize = file.length();
+
+        long numChunks = (fileSize % CHUNK_SIZE_BYTES == 0) ?
+                fileSize / CHUNK_SIZE_BYTES : (fileSize / CHUNK_SIZE_BYTES) + 1;
+
+        byte [][] chunkHashes = new byte[(int) numChunks][];
+
+        FileInputStream fis = new FileInputStream(file);
+        byte[] buffer = new byte[(int) CHUNK_SIZE_BYTES];
+        int read = 0;
+        int count = 0;
+        while ((read = fis.read(buffer)) > 0) {
+            if (read < CHUNK_SIZE_BYTES) {
+                byte[] buffer1 = new byte[read];
+
+                for (int i=0; i < read; i++)
+                    buffer1[i] = buffer[i];
+
+                try {
+                    chunkHashes[count] = Utils.hash(buffer1);
+                } catch (NoSuchAlgorithmException e) {
+
+                }
+            } else {
+                try {
+                    chunkHashes[count] = Utils.hash(buffer);
+                } catch (NoSuchAlgorithmException e) {
+                }
+            }
+
+            count ++;
+        }
+
+        InfoDictionary infoDictionary = new InfoDictionary(fileSize, file.getName(), CHUNK_SIZE_BYTES, chunkHashes);
+        Metainfo meta = new Metainfo(announceIp, infoDictionary);
+
+        return meta;
     }
 }

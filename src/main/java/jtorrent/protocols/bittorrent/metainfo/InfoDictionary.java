@@ -28,9 +28,9 @@ public final class InfoDictionary implements Serializable {
      * @param pieces An array of byte arrays containing the 20-byte SHA1 hash values for all the pieces
      *               of the torrent. The hash of the first piece is at index 0.
      */
-    public InfoDictionary(Integer length,
+    public InfoDictionary(Long length,
                           String name,
-                          Integer piece_length,
+                          Long piece_length,
                           byte[][] pieces) {
         INFO = new Hashtable<>();
 
