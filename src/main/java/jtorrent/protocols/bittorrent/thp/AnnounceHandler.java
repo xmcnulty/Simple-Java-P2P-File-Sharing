@@ -2,11 +2,14 @@ package jtorrent.protocols.bittorrent.thp;
 
 import com.google.gson.Gson;
 import jtorrent.common.JPeer;
+import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 import jtorrent.tracker.JTracker;
 import org.simpleframework.http.Request;
 import org.simpleframework.http.Response;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,16 +30,36 @@ import java.util.concurrent.ConcurrentMap;
 public class AnnounceHandler implements org.simpleframework.http.core.Container {
 
     public static final String ANNOUNCE_PATH = "/announce"; // HTTP url path for announce requests
+    public static final String NEW_TORRENT_PATH = "/new_torrent";
 
     private final ConcurrentMap<String, JTracker.TorrentRef> TORRENTS;
+    private final JTracker TRACKER;
 
-    public AnnounceHandler(ConcurrentMap<String, JTracker.TorrentRef> TORRENTS) {
+    public AnnounceHandler(ConcurrentMap<String, JTracker.TorrentRef> TORRENTS, JTracker tracker) {
         this.TORRENTS = TORRENTS;
+        this.TRACKER = tracker;
     }
 
     @Override
     public void handle(Request request, Response response) {
-        System.out.println("announce received from: " + request.getClientAddress().toString());
+        if (NEW_TORRENT_PATH.equalsIgnoreCase(request.getPath().toString())) {
+            try {
+                InputStream inputStream = request.getInputStream();
+                ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+
+                Metainfo metainfo = (Metainfo) objectInputStream.readObject();
+
+                TRACKER.addTorrent(metainfo);
+            } catch (Exception e) {
+                response.setCode(400);
+                response.setDescription("Error grabbing object.");
+                return;
+            }
+
+            response.setCode(200);
+            return;
+        }
+
         if (!ANNOUNCE_PATH.equals(request.getPath().toString())) {
             response.setCode(404);
             response.setDescription("Not Found");
