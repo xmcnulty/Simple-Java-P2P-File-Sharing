@@ -41,7 +41,7 @@ public class JTracker {
         TORRENTS = new ConcurrentHashMap<>();
 
         // create the connection. server
-        CONNECTION = new SocketConnection(new ContainerSocketProcessor(new AnnounceHandler(TORRENTS)));
+        CONNECTION = new SocketConnection(new ContainerSocketProcessor(new AnnounceHandler(TORRENTS, this)));
 
         stopped = new AtomicBoolean(false);
 
