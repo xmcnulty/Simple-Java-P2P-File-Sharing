@@ -18,6 +18,9 @@ import java.util.Hashtable;
  * Created by Xavier on 4/24/17.
  */
 public final class Metainfo implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     // Keys for dictionary.
     public static final String ANNOUNCE_KEY = "announce",
         INFO_KEY = "info";
