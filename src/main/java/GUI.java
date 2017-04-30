@@ -11,7 +11,7 @@ import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 public class GUI implements ActionListener{
 	
 	private String CLIENT_NAME = "Peer Service";
-	private String hostName = "127.0.0.1";
+	private String hostName = "http://10.21.76.195:4930/new_torrent";
     private int portNumber = 222;
 	private JList hostList;
 	private DefaultListModel hostLM;
@@ -242,7 +242,9 @@ public class GUI implements ActionListener{
 						URL url = new URL(hostName);
 						HttpURLConnection connection = null;
 					    connection = (HttpURLConnection) url.openConnection();
-					    connection.setRequestMethod("POST");
+					    connection.setDoOutput(true);
+					    connection.setUseCaches(false);
+					    connection.setRequestMethod("GET");
 					    connection.setRequestProperty("Content-Type", 
 					        "application/octet-stream");
 					    
@@ -251,7 +253,9 @@ public class GUI implements ActionListener{
 				        wr.writeObject(m);
 				        wr.close();
 				        System.out.println("Sent info");
-					} catch (Exception ex){}
+					} catch (Exception ex){
+						ex.printStackTrace();
+					}
 				    
 				    
 					System.out.println("getCurrentDirectory(): " + fc.getCurrentDirectory());
