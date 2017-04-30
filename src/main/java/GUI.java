@@ -254,6 +254,8 @@ public class GUI implements ActionListener{
 					            connection.getOutputStream());
 				        wr.writeObject(m);
 				        wr.close();
+				        connection.setConnectTimeout(10);
+				        connection.setReadTimeout(10);
 				        connection.getResponseMessage();
 				        System.out.println("Sent info");
 					} catch (Exception ex){
