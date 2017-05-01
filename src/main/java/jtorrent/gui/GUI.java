@@ -19,8 +19,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class GUI implements ActionListener{
   
   private String CLIENT_NAME = "Peer Service";
-  private String hostName = "http://10.21.76.195";
-  private int portNumber = 4930;
+  private String hostName = "http://127.0.1.1";
+  private int portNumber = 55552;
 
   private JList<String> hostList;
   private DefaultListModel<String> hostLM;
@@ -30,9 +30,12 @@ public class GUI implements ActionListener{
   private static final String ANNOUNCE_PATH = "/announce"; // HTTP url path for announce requests
   private static final String NEW_TORRENT_PATH = "/new_torrent";
   private static final String IMPORT_TORRENT = "Import Torrent";
+  private static final String NEW_TORRENT = "Create Torrent";
+  private static final String UPDATE_SERVER = "Update Server Info";
   private ConcurrentLinkedQueue<Client> clientList = new ConcurrentLinkedQueue<Client>();
   private JTextField portField;
   private JTextField serverField;
+  
   
   /**
    * Single extra thread which keeps the right hand list updated based on the clientList object.
@@ -55,7 +58,6 @@ public class GUI implements ActionListener{
       }
     }
     
-    @Override
     public void run() {
       // TODO Auto-generated method stub
       while (true){
@@ -85,27 +87,27 @@ public class GUI implements ActionListener{
     hostList = new JList(hostLM);
     
     JPanel westPanel = new JPanel();
-    JButton searchFiles = new JButton("Select File");
-    JButton getFile = new JButton("Get File");
+    JButton searchFiles = new JButton(NEW_TORRENT);
+    JButton updateButton = new JButton(UPDATE_SERVER);
     JButton importTor = new JButton(IMPORT_TORRENT);
     portField = new JTextField(20);
     portField.setText("Enter Port");
     serverField = new JTextField(20);
     serverField.setText("Enter Server IP");
     
-    JButton refreshButton = new JButton(refreshTAG);
+//    JButton refreshButton = new JButton(refreshTAG);
     westPanel.add(searchFiles);
-    westPanel.add(getFile);
-    westPanel.add(refreshButton);
+//    westPanel.add(refreshButton);
     westPanel.add(importTor);
+    westPanel.add(updateButton);
     westPanel.add(serverField);
     westPanel.add(portField);
 
 
     //hostList.addListSelectionListener(this);
     searchFiles.addActionListener(this);
-    getFile.addActionListener(this);
-    refreshButton.addActionListener(this);
+    updateButton.addActionListener(this);
+//    refreshButton.addActionListener(this);
     importTor.addActionListener(this);
     
     guiFrame.add(westPanel);
@@ -119,9 +121,9 @@ public class GUI implements ActionListener{
 		
     
     //Create auto-refresher for the right panel
-    (new Thread(new RefreshTorrents())).start();
+    //(new Thread(new RefreshTorrents())).start();
 		
-    System.out.println("Ping time: " + msPing(hostName, portNumber) + " MS\n");
+    //System.out.println("Ping time: " + msPing(hostName, portNumber) + " MS\n");
 	}
 	
 	/** Pings address 10 times then averages ping
@@ -230,12 +232,9 @@ public class GUI implements ActionListener{
         System.out.println("internet addr: " + InetAddress.getLocalHost().getHostAddress());
         Metainfo m = Metainfo.createTorrentFromFile(selectedFile, 
             InetAddress.getLocalHost().getHostAddress());
-        JTorrent tor = new JTorrent(m, true);
-        Client cli = Client.newSeeder(InetAddress.getByName(InetAddress.getLocalHost().getHostName()), 
-            portNumber, tor, selectedFile);
-        cli.start();
-        clientList.add(cli);
+
         // Make http request to tracker server
+        System.out.println("Sending to: " + hostName + ":" + portNumber + NEW_TORRENT_PATH);
         URL url = new URL(hostName + ":" + portNumber + NEW_TORRENT_PATH);
         HttpURLConnection connection = null;
 
@@ -251,10 +250,19 @@ public class GUI implements ActionListener{
               connection.getOutputStream());
         wr.writeObject(m);
         wr.close();
-        connection.setConnectTimeout(10);
-        connection.setReadTimeout(10);
-        connection.getResponseMessage();
+        connection.setConnectTimeout(1);
+        connection.setReadTimeout(1);
+//        connection.getResponseMessage();
+        connection.getResponseCode();
+        connection.disconnect();
         System.out.println("Sent info");
+        
+        JTorrent tor = new JTorrent(m, true);
+        Client cli = Client.newSeeder(Inet4Address.getLocalHost(), 
+            portNumber, tor, selectedFile);
+        cli.start();
+        clientList.add(cli);
+        hostLM.addElement(cli.getTorrent().getName());
       } catch (Exception ex){
         ex.printStackTrace();
       }
@@ -287,6 +295,7 @@ public class GUI implements ActionListener{
             portNumber, tor);
         cli.start();
         clientList.add(cli);
+        hostLM.addElement(cli.getTorrent().getName());
         System.out.println("getCurrentDirectory(): " + fc2.getCurrentDirectory());
         System.out.println("getSelectedFile() : " + selectedFile);
       } else {
@@ -304,10 +313,12 @@ public class GUI implements ActionListener{
 	  System.out.println(e.getActionCommand());
 		
 	  switch(e.getActionCommand()){
-	    case "Select Host":
-				System.out.println("Selected host: " + hostList.getSelectedValue());
+	    case UPDATE_SERVER:
+	      hostName = serverField.getText();
+	      portNumber = Integer.parseInt(portField.getText());
+	      System.out.println("Host name: " + hostName + " on port: " + portNumber);
 				break;
-			case "Select File":
+			case NEW_TORRENT:
 				selectBehavior();
 				break;
 			case IMPORT_TORRENT:
