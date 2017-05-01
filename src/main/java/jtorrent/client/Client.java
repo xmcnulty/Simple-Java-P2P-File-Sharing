@@ -40,7 +40,7 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
     private JPeer self;
 
-    private Thread announceThread, seederThread;
+    private Thread announceThread, seederThread, leecherThread;
 
     private final AtomicBoolean stopped;
 
@@ -123,6 +123,10 @@ public class Client implements ClientConnectionHandler.PeerListener {
             }, "seeder-thread");
 
             seederThread.start();
+        } else if (!chunkedFile.isSeeding()) {
+            leecherThread = new LeecherHandler(chunkedFile, this);
+
+            leecherThread.start();
         }
     }
 
@@ -140,6 +144,29 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
     public synchronized void setState(JPeer.State state) {
         self.setState(state);
+    }
+
+    /**
+     * It is now okay to start seeding. Called by the leecher handler.
+     */
+    public void startSeeding() {
+        if (chunkedFile.isSeeding() && (seederThread == null || !seederThread.isAlive())) {
+            seederThread = new Thread(() -> {
+                try {
+                    leecherThread.join();
+                    setState(JPeer.State.COMPLETED);
+
+                    connection.connect(SOCKET_ADDRESS);
+                    System.out.println("Starting seeder listener on: " + SOCKET_ADDRESS.toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }, "seeder-thread");
+
+            seederThread.start();
+        }
     }
 
     @Override
