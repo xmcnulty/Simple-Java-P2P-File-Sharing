@@ -132,27 +132,32 @@ public class AnnounceHandler implements org.simpleframework.http.core.Container 
 
         // everything seems to be in order, lets update the peer
         JTracker.PeerRef peer = null;
+        String ip = (String) rootMapJson.get("ip");
+        Double port = (Double) rootMapJson.get("port");
+        Double uploaded = (Double) rootMapJson.get("uploaded");
+        Double downloaded = (Double) rootMapJson.get("downloaded");
+        Double left = (Double) rootMapJson.get("left");
 
         switch (event) {
             case STARTED:
-                peer = torrent.peerStarted((String) rootMapJson.get("ip"),
-                        (Integer) rootMapJson.get("port"),
-                        peer_id, (Long) rootMapJson.get("updated"),
-                        (Long) rootMapJson.get("downloaded"),
-                        (Long) rootMapJson.get("left"));
+                peer = torrent.peerStarted(ip,
+                        port.intValue(),
+                        peer_id, uploaded.longValue(),
+                        downloaded.longValue(),
+                        left.longValue());
                 break;
             case STOPPED:
-                peer = torrent.peerStopped(peer_id, (Long) rootMapJson.get("updated"),
+                peer = torrent.peerStopped(peer_id, (Long) rootMapJson.get("uploaded"),
                         (Long) rootMapJson.get("downloaded"),
                         (Long) rootMapJson.get("left"));
                 break;
             case COMPLETED:
-                peer = torrent.peerCompleted(peer_id, (Long) rootMapJson.get("updated"),
+                peer = torrent.peerCompleted(peer_id, (Long) rootMapJson.get("uploaded"),
                         (Long) rootMapJson.get("downloaded"),
                         (Long) rootMapJson.get("left"));
                 break;
             default:
-                peer = torrent.peerDefaultAnnounce(peer_id, (Long) rootMapJson.get("updated"),
+                peer = torrent.peerDefaultAnnounce(peer_id, (Long) rootMapJson.get("uploaded"),
                         (Long) rootMapJson.get("downloaded"),
                         (Long) rootMapJson.get("left"));
                 break;
@@ -164,7 +169,8 @@ public class AnnounceHandler implements org.simpleframework.http.core.Container 
 
         // Write the response JSON.
         PrintStream responseStream = response.getPrintStream();
-        responseStream.print(craftResponseBody(torrent, torrent.getValidPeers(peer)));
+        String respJson = craftResponseBody(torrent, torrent.getValidPeers(peer));
+        responseStream.print(respJson);
         responseStream.flush();
         responseStream.close();
     }

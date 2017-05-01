@@ -178,7 +178,7 @@ public class JTracker {
             if (lastAnnounceTime == null)
                 return false; // peer hasn't even started yet
 
-            return lastAnnounceTime.getTime() + (1000 * EXPIRE_TIME_SECONDS) > (new Date()).getTime();
+            return lastAnnounceTime.getTime() + (1000 * EXPIRE_TIME_SECONDS) < (new Date()).getTime();
         }
 
         /**
@@ -193,6 +193,7 @@ public class JTracker {
             this.bytesDowloaded = bytesDowloaded;
             this.bytesUploaded = bytesUploaded;
             this.bytesLeft = bytesLeft;
+            lastAnnounceTime = new Date();
         }
     }
 
@@ -236,8 +237,9 @@ public class JTracker {
         // Remove all expired peers from this torrent.
         public void removeExpired() {
             for (PeerRef p : PEERS.values())
-                if (p.isExpired())
-                    PEERS.remove(p.getPeerId());
+                if (p.isExpired()) {
+                    System.out.println("Removing: " + PEERS.remove(p.getPeerId()).getPeerId());
+                }
         }
 
         /**
@@ -255,7 +257,9 @@ public class JTracker {
             PeerRef p = new PeerRef(this, ip, port, Utils.hexStringToByteArray(id));
             p.update(JPeer.State.STARTED, uploaded, downloaded, left);
 
-            return addPeer(p);
+            addPeer(p);
+
+            return p;
         }
 
         /**
