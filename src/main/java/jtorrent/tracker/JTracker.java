@@ -71,7 +71,7 @@ public class JTracker {
      * @return URL formatted as http://ip:port/announce
      */
     public final String url() {
-        StringBuilder sb = new StringBuilder("http://").append(ADDRESS.getAddress().getCanonicalHostName())
+        StringBuilder sb = new StringBuilder("http://").append(ADDRESS.getAddress().getHostAddress())
                 .append(":").append(ADDRESS.getPort()).append("/announce");
 
         return sb.toString();

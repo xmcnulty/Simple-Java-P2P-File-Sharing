@@ -13,6 +13,8 @@ import java.util.Hashtable;
  * Created by Xavier on 4/24/17.
  */
 public final class InfoDictionary implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     // KEY-VALUES
     public static final String LENGTH_KEY = "length",
         NAME_KEY = "name", PIECE_LENGTH_KEY = "piece length",

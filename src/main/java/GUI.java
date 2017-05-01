@@ -15,8 +15,10 @@ import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 public class GUI implements ActionListener{
 	
 	private String CLIENT_NAME = "Peer Service";
-	private String hostName = "http://10.21.76.195:4930";
-  private int portNumber = 222;
+
+	private String hostName = "http://10.21.76.195:4930/new_torrent";
+    private int portNumber = 222;
+
 	private JList hostList;
 	private DefaultListModel hostLM;
 	private File selectedFile;
@@ -257,6 +259,7 @@ public class GUI implements ActionListener{
 						// Make http request to tracker server
 						URL url = new URL(hostName + NEW_TORRENT_PATH);
 						HttpURLConnection connection = null;
+
 				    connection = (HttpURLConnection) url.openConnection();
 				    connection.setRequestMethod("POST");
 				    connection.setRequestProperty("Content-Type", 

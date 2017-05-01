@@ -15,8 +15,9 @@ public class Tester {
         File f = new File(filePath);
 
         try {
-            Metainfo metainfo = Metainfo.createTorrentFromFile(f, "1.1.1.1:90");
-            System.out.println(metainfo.JSON);
+            Metainfo metainfo = Metainfo.createTorrentFromFile(f, "10.21.76.195");
+            System.out.println(metainfo.getJSON());
+            metainfo.writeToFile();
         } catch (IOException e) {
             e.printStackTrace();
         }

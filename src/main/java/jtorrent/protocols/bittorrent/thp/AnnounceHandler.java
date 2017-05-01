@@ -42,6 +42,7 @@ public class AnnounceHandler implements org.simpleframework.http.core.Container 
 
     @Override
     public void handle(Request request, Response response) {
+        System.out.println("HTTP message received. "  + request.getPath().toString());
         if (NEW_TORRENT_PATH.equalsIgnoreCase(request.getPath().toString())) {
             try {
                 InputStream inputStream = request.getInputStream();
@@ -49,8 +50,14 @@ public class AnnounceHandler implements org.simpleframework.http.core.Container 
 
                 Metainfo metainfo = (Metainfo) objectInputStream.readObject();
 
+                objectInputStream.close();
+
+                System.out.println(metainfo.getJSON());
+
                 TRACKER.addTorrent(metainfo);
             } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("Execption");
                 response.setCode(400);
                 response.setDescription("Error grabbing object.");
                 return;

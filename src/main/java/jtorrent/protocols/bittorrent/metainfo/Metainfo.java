@@ -18,6 +18,11 @@ import java.util.Hashtable;
  * Created by Xavier on 4/24/17.
  */
 public final class Metainfo implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    public static final long CHUNK_SIZE_BYTES = 100000;
+
     // Keys for dictionary.
     public static final String ANNOUNCE_KEY = "announce",
         INFO_KEY = "info";
@@ -117,8 +122,6 @@ public final class Metainfo implements Serializable {
     }
 
     public static Metainfo createTorrentFromFile(File file, String announceIp) throws IOException {
-        final long CHUNK_SIZE_BYTES = 100000; // 100 kb
-
         if (file == null || file.isDirectory())
             return null;
 

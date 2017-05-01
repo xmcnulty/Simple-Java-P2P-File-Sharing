@@ -1,6 +1,7 @@
 package jtorrent.common;
 
 import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
+import jtorrent.protocols.bittorrent.metainfo.InfoDictionary;
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Dictionary;
 
 /**
  * A torrent to be tracked by the network's Tracker.
@@ -51,6 +53,10 @@ public class JTorrent {
     public String infoHash() {
         return Utils.bytesToHex(info_hash);
     }
+
+    public String getName() {return metainfo.getName();}
+
+    public InfoDictionary getInfo() {return metainfo.getInfo();}
 
     /**
      * Writes the metainfo to a file
