@@ -6,6 +6,9 @@ import jtorrent.common.JPeer;
 import jtorrent.common.JTorrent;
 import jtorrent.common.Utils;
 import jtorrent.tracker.JTracker;
+import org.simpleframework.http.core.ContainerSocketProcessor;
+import org.simpleframework.transport.connect.Connection;
+import org.simpleframework.transport.connect.SocketConnection;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -26,6 +29,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Client implements ClientConnectionHandler.PeerListener {
     private static final String BITTORRENT_ID_PREFIX = "-TO0042-";
 
+    private Connection connection;
+    private final InetSocketAddress SOCKET_ADDRESS;
+
     private final InetAddress address;
     private final JTorrent torrent;
     private final int port;
@@ -34,9 +40,7 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
     private JPeer self;
 
-    private ClientConnectionHandler connectionHandler;
-
-    private Thread announceThread;
+    private Thread announceThread, seederThread;
 
     private final AtomicBoolean stopped;
 
@@ -47,14 +51,13 @@ public class Client implements ClientConnectionHandler.PeerListener {
         this.torrent = torrent;
         this.port = port;
 
+        SOCKET_ADDRESS = new InetSocketAddress(address.getHostAddress(), port);
+
         byte [] id = new byte[20];
         Random generator = new Random(System.nanoTime());
         generator.nextBytes(id);
 
         self = new JPeer(address.getHostAddress(), port, id);
-
-        connectionHandler = new ClientConnectionHandler(this.torrent, this.address, port, Utils.bytesToHex(id));
-        connectionHandler.addListener(this);
 
         stopped = new AtomicBoolean(false);
     }
@@ -74,6 +77,7 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
         c.chunkedFile = new ChunkedFile(torrent.getInfo(), f, false);
 
+        c.connection = new SocketConnection(new ContainerSocketProcessor(new SeederHandler(c.chunkedFile)));
         return c;
     }
 
@@ -90,6 +94,7 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
         c.chunkedFile = new ChunkedFile(torrent.getInfo(), file, true);
 
+        c.connection = new SocketConnection(new ContainerSocketProcessor(new SeederHandler(c.chunkedFile)));
         return c;
     }
 
@@ -105,6 +110,19 @@ public class Client implements ClientConnectionHandler.PeerListener {
             }
 
             announceThread.start();
+        }
+
+        if (chunkedFile.isSeeding() && (seederThread == null || !seederThread.isAlive())) {
+            seederThread = new Thread(() -> {
+                try {
+                    connection.connect(SOCKET_ADDRESS);
+                    System.out.println("Starting seeder listener on: " + SOCKET_ADDRESS.toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }, "seeder-thread");
+
+            seederThread.start();
         }
     }
 
