@@ -6,6 +6,8 @@ import jtorrent.protocols.bittorrent.metainfo.InfoDictionary;
 
 import java.io.*;
 import java.util.Dictionary;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -39,6 +41,7 @@ public class ChunkedFile {
     private final ConcurrentMap<String, Pair<Long, Long>> chunks; // Piece hash to piece byte range
 
     private long written, left; // number of byte's written and left to write.
+    private Set<String> writtenChunks;
 
     private boolean seeding;
 
@@ -60,10 +63,14 @@ public class ChunkedFile {
         }
 
         this.seeding = seeding;
+        writtenChunks = new HashSet<>();
 
         if (this.seeding) {
+            writtenChunks.addAll(chunks.keySet());
             written = size;
             left = 0;
+
+            System.out.println(chunks);
         } else {
             written = 0;
             left = size;
@@ -131,11 +138,24 @@ public class ChunkedFile {
 
         fos.close();
 
+        writtenChunks.add(chunkHash);
+
         written += data.length;
         left -= data.length;
 
         if (left == 0)
             seeding = true; // we can now seed
+    }
+
+    /**
+     * Returns a list of chunks that are still needed of the file.
+     * @return
+     */
+    public synchronized Set<String> neededChunks() {
+        Set<String> needed = chunks.keySet();
+        needed.removeAll(writtenChunks);
+
+        return needed;
     }
 
     public synchronized long getWritten() {
