@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentMap;
 public class ChunkedFile {
     private final String name;
     private final long size;
-    private final int chunkSize;
+    private final long chunkSize;
     private final int numChunks;
 
     private final File file;
@@ -34,7 +34,7 @@ public class ChunkedFile {
         Dictionary<String, Object> infoValues = info.get();
         name = (String) infoValues.get(InfoDictionary.NAME_KEY);
         size = (Long) infoValues.get(InfoDictionary.LENGTH_KEY);
-        chunkSize = (Integer) infoValues.get(InfoDictionary.PIECE_LENGTH_KEY);
+        chunkSize = (Long) infoValues.get(InfoDictionary.PIECE_LENGTH_KEY);
         byte[][] pieceHashes = (byte[][]) infoValues.get(InfoDictionary.PIECES_KEY);
 
         numChunks = pieceHashes.length;
@@ -77,7 +77,7 @@ public class ChunkedFile {
 
         fis.getChannel().position(byteRange.getKey());
 
-        byte[] bytes = new byte[chunkSize];
+        byte[] bytes = new byte[(int) chunkSize];
 
         int numRead = fis.read(bytes);
         fis.close();

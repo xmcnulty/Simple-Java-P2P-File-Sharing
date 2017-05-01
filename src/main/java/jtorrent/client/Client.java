@@ -8,8 +8,10 @@ import jtorrent.tracker.JTracker;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.*;
 import java.nio.channels.SocketChannel;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -32,17 +34,20 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
     private ClientConnectionHandler connectionHandler;
 
+    private Thread announceThread;
+
     private Client(InetAddress address, int port, JTorrent torrent) throws IOException {
         this.address = address;
         this.torrent = torrent;
         this.port = port;
 
-        String id = Client.BITTORRENT_ID_PREFIX + UUID.randomUUID()
-                .toString().split("-")[4];
+        byte [] id = new byte[20];
+        Random generator = new Random(System.nanoTime());
+        generator.nextBytes(id);
 
-        self = new JPeer(address.getHostAddress(), port, Utils.hexStringToByteArray(id));
+        self = new JPeer(address.getHostAddress(), port, id);
 
-        connectionHandler = new ClientConnectionHandler(this.torrent, this.address, port, id);
+        connectionHandler = new ClientConnectionHandler(this.torrent, this.address, port, Utils.bytesToHex(id));
         connectionHandler.addListener(this);
     }
 
@@ -82,6 +87,16 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
     public void start() {
         setState(JPeer.State.STARTED);
+
+        if (announceThread == null || !announceThread.isAlive()) {
+            try {
+                announceThread = new Thread(new Announcer(), "announce-thread");
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+
+            announceThread.start();
+        }
     }
 
     public synchronized JPeer.State getState() {
@@ -107,12 +122,13 @@ public class Client implements ClientConnectionHandler.PeerListener {
      */
     private class Announcer implements Runnable {
         private int announceIntervalSeconds = JTracker.TorrentRef.ANNOUNCE_INTERVAL_SECONDS;
-        private final URL uri;
+        private final URL url;
         private final ConcurrentMap<String, Object> jsonValues;
 
         public Announcer() throws MalformedURLException {
-            String addr = "http://" + address.getHostAddress() + ":" + port;
-            uri = new URL(addr);
+            String addr = "http://" + torrent.getAddress();
+            System.out.println("Announcing to: " + addr);
+            url = new URL(addr);
 
             jsonValues = new ConcurrentHashMap<>();
             jsonValues.put("peer_id", self.getPeerId());
@@ -129,6 +145,24 @@ public class Client implements ClientConnectionHandler.PeerListener {
                 jsonValues.put("uploaded", 0);
 
                 String json = new Gson().toJson(jsonValues);
+
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type",
+                        "application/json");
+                connection.setUseCaches(false);
+                connection.setDoOutput(true);
+                connection.connect();
+
+                PrintStream ps = new PrintStream(connection.getOutputStream());
+                ps.print(json);
+                ps.flush();
+                ps.close();
+
+                connection.setConnectTimeout(10);
+                connection.setReadTimeout(10);
+                //connection.getResponseMessage();
+
                 Thread.sleep(announceIntervalSeconds * 1000);
             } catch (Exception e) {
                 // ignore

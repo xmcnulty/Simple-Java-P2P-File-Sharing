@@ -74,6 +74,10 @@ public final class Metainfo implements Serializable {
         return (String) getInfo().get().get(InfoDictionary.NAME_KEY);
     }
 
+    public String getAnnounceAddress() {
+        return (String) META_INFO.get(ANNOUNCE_KEY);
+    }
+
     /**
      * Writes this object to a file using the name info.name.
      * @return Name of the file if successful, empty string otherwise.
