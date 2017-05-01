@@ -1,14 +1,18 @@
 package jtorrent.common;
 
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
+//import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
+import java.io.ByteArrayOutputStream;
+import jtorrent.protocols.bittorrent.metainfo.InfoDictionary;
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Dictionary;
 
 /**
  * A torrent to be tracked by the network's Tracker.
@@ -22,7 +26,7 @@ public class JTorrent {
 
     private final byte[] info_hash;
 
-    private final URI tracker;
+    private final URL tracker;
 
     /**
      * Create a torrent from a meta-info file.
@@ -36,20 +40,28 @@ public class JTorrent {
         this.seeder = seeder;
 
         // need to create a hash of the source file's information
-        ByteOutputStream bos = new ByteOutputStream();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream out = new ObjectOutputStream(bos);
         out.writeObject(metainfo.getInfo());
         out.flush();
 
-        byte[] encodedInfo = bos.getBytes();
+        byte[] encodedInfo = bos.toByteArray();
         info_hash = Utils.hash(encodedInfo);
 
         // attempt to get the tracker from the metainfo file.
-        tracker = new URI(metainfo.getTracker());
+        tracker = new URL("http://" + metainfo.getTracker());
     }
 
     public String infoHash() {
         return Utils.bytesToHex(info_hash);
+    }
+
+    public String getName() {return metainfo.getName();}
+
+    public InfoDictionary getInfo() {return metainfo.getInfo();}
+
+    public String getAddress() {
+        return metainfo.getAnnounceAddress();
     }
 
     /**

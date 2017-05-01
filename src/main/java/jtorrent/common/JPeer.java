@@ -105,6 +105,14 @@ public class JPeer {
         return fieldsMap;
     }
 
+    public State getState() {
+        return state;
+    }
+
+    public void setState(State state) {
+        this.state = state;
+    }
+
     /**
      * Compares the equality of JPeers based on peer id.
      * @param obj JPeer to compare to this.
@@ -117,6 +125,6 @@ public class JPeer {
 
         JPeer p = (JPeer) obj;
 
-        return peerId == p.peerId;
+        return peerId.equals(p.peerId);
     }
 }

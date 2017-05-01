@@ -21,6 +21,8 @@ public final class Metainfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final long CHUNK_SIZE_BYTES = 100000;
+
     // Keys for dictionary.
     public static final String ANNOUNCE_KEY = "announce",
         INFO_KEY = "info";
@@ -72,6 +74,10 @@ public final class Metainfo implements Serializable {
         return (String) getInfo().get().get(InfoDictionary.NAME_KEY);
     }
 
+    public String getAnnounceAddress() {
+        return (String) META_INFO.get(ANNOUNCE_KEY);
+    }
+
     /**
      * Writes this object to a file using the name info.name.
      * @return Name of the file if successful, empty string otherwise.
@@ -79,9 +85,12 @@ public final class Metainfo implements Serializable {
     public String writeToFile() {
         String fileName = getName() + ".jtorrent";
 
-        try (ObjectOutputStream write = new ObjectOutputStream(new FileOutputStream(fileName))) {
+        try {
+            FileOutputStream fis = new FileOutputStream(fileName);
+            ObjectOutputStream write = new ObjectOutputStream(fis);
             write.writeObject(this);
             write.close();
+            fis.close();
 
             return fileName;
         } catch (Exception e) {
@@ -120,8 +129,6 @@ public final class Metainfo implements Serializable {
     }
 
     public static Metainfo createTorrentFromFile(File file, String announceIp) throws IOException {
-        final long CHUNK_SIZE_BYTES = 100000; // 100 kb
-
         if (file == null || file.isDirectory())
             return null;
 
