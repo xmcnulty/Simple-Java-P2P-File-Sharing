@@ -15,18 +15,20 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class ChunkedFile {
   
-  public class Pair<L,R> {
-    private L l;
-    private R r;
-    public Pair(L l, R r){
-        this.l = l;
-        this.r = r;
+    // Given as a solution on: http://stackoverflow.com/questions/4777622/creating-a-list-of-pairs-in-java
+    // Not concurrent in itself
+    public class Pair<L,R> {
+      private L l;
+      private R r;
+      public Pair(L l, R r){
+          this.l = l;
+          this.r = r;
+      }
+      public L getL(){ return l; }
+      public R getR(){ return r; }
+      public void setL(L l){ this.l = l; }
+      public void setR(R r){ this.r = r; }
     }
-    public L getL(){ return l; }
-    public R getR(){ return r; }
-    public void setL(L l){ this.l = l; }
-    public void setR(R r){ this.r = r; }
-}
   
     private final String name;
     private final long size;

@@ -116,6 +116,8 @@ public class Client implements ClientConnectionHandler.PeerListener {
     public void handleFailedConnection(JPeer peer) {
 
     }
+    
+    public JTorrent getTorrent(){ return torrent; }
 
     /**
      * Sends period announce messages.
