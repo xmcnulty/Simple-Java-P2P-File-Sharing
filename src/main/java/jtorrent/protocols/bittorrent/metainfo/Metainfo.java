@@ -85,9 +85,12 @@ public final class Metainfo implements Serializable {
     public String writeToFile() {
         String fileName = getName() + ".jtorrent";
 
-        try (ObjectOutputStream write = new ObjectOutputStream(new FileOutputStream(fileName))) {
+        try {
+            FileOutputStream fis = new FileOutputStream(fileName);
+            ObjectOutputStream write = new ObjectOutputStream(fis);
             write.writeObject(this);
             write.close();
+            fis.close();
 
             return fileName;
         } catch (Exception e) {
