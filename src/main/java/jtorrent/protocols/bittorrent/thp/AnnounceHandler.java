@@ -159,6 +159,7 @@ public class AnnounceHandler implements org.simpleframework.http.core.Container 
         }
 
         response.setContentType("application/json");
+        response.setDate("Time", System.nanoTime());
         response.setCode(200);
 
         // Write the response JSON.

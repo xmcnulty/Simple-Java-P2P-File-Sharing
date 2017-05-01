@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Dictionary;
@@ -24,7 +25,7 @@ public class JTorrent {
 
     private final byte[] info_hash;
 
-    private final URI tracker;
+    private final URL tracker;
 
     /**
      * Create a torrent from a meta-info file.
@@ -47,7 +48,7 @@ public class JTorrent {
         info_hash = Utils.hash(encodedInfo);
 
         // attempt to get the tracker from the metainfo file.
-        tracker = new URI(metainfo.getTracker());
+        tracker = new URL("http://" + metainfo.getTracker());
     }
 
     public String infoHash() {
@@ -57,6 +58,10 @@ public class JTorrent {
     public String getName() {return metainfo.getName();}
 
     public InfoDictionary getInfo() {return metainfo.getInfo();}
+
+    public String getAddress() {
+        return metainfo.getAnnounceAddress();
+    }
 
     /**
      * Writes the metainfo to a file
