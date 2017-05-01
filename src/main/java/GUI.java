@@ -7,17 +7,25 @@ import javax.swing.*;
 
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 
-
+/**
+ * GUI class for peer
+ * @author Jeffrey Hensel
+ *
+ */
 public class GUI implements ActionListener{
 	
 	private String CLIENT_NAME = "Peer Service";
+
 	private String hostName = "http://10.21.76.195:4930/new_torrent";
     private int portNumber = 222;
+
 	private JList hostList;
 	private DefaultListModel hostLM;
 	private File selectedFile;
 	private String[] hostListInfo;
 	public static final String refreshTAG = "Refresh List";
+	private static final String ANNOUNCE_PATH = "/announce"; // HTTP url path for announce requests
+  private static final String NEW_TORRENT_PATH = "/new_torrent";
 	
 	public void GUI(){
 		
@@ -31,18 +39,18 @@ public class GUI implements ActionListener{
 		
 		JPanel westPanel = new JPanel();
 		JButton searchFiles = new JButton("Select File");
-		JButton selectHost = new JButton("Select Host");
+		JButton getFile = new JButton("Get File");
 		
 		JButton refreshButton = new JButton(refreshTAG);
 		westPanel.add(searchFiles);
-		westPanel.add(selectHost);
+		westPanel.add(getFile);
 		westPanel.add(refreshButton);
 		
 		
 		
 		//hostList.addListSelectionListener(this);
 		searchFiles.addActionListener(this);
-		selectHost.addActionListener(this);
+		getFile.addActionListener(this);
 		refreshButton.addActionListener(this);
 		
 		guiFrame.add(westPanel);
@@ -174,41 +182,51 @@ public class GUI implements ActionListener{
 		}
 		// Request new list from server
 		try {
-			Socket serverSoc = new Socket(hostName, portNumber);
-			PrintWriter out = new PrintWriter(serverSoc.getOutputStream(), true);
-			BufferedReader in = new BufferedReader(new InputStreamReader(serverSoc.getInputStream()));
-			
-			String toSend = "";
-			String fromServer = "";
-			File tmp = new File("C:\\");
-			System.out.println(tmp.getFreeSpace());
-			
-			out.println("List Size");
-			fromServer = in.readLine();
-			int listSize = Integer.parseInt(fromServer);
-			System.out.println("Hosts found: " + listSize);
-			hostListInfo = new String[listSize];
-			
-			out.println("List");
-			for (int i = 0; i < listSize; i++){
-				fromServer = in.readLine();
-				out.println("Next");
-				hostListInfo[i] = fromServer;
-				System.out.println("Added: " + hostListInfo[i] + " at index: " + i);
-				hostLM.addElement(hostListInfo[i]);
-			}
-			
-			//hostList = new JList(hostLM);
-			
-			
-			while ((fromServer = in.readLine()).equals("null")){
-				if (fromServer == "Bye.")
-					break;
-				if (!fromServer.contains("null"))
-					System.out.println(fromServer);
-				//out.println("List");
-				out.println("Finished");
-			}
+		  URL url = new URL(hostName + ANNOUNCE_PATH);
+		  BufferedReader in = new BufferedReader(
+        new InputStreamReader(url.openStream()));
+
+//      String inputLine;
+//      while ((inputLine = in.readLine()) != null)
+//          System.out.println(inputLine);
+//      in.close();
+      
+      hostListInfo = new String[20];
+      
+      String inputLine;
+      int tmp = 0;
+      while ((inputLine = in.readLine()) != null){
+        hostListInfo[tmp] = inputLine;
+        System.out.println("Added: " + hostListInfo[tmp] + " at index: " + tmp); 
+        System.out.println(inputLine);
+        tmp++;
+      }
+      in.close();
+      
+      
+//      for (int i = 0; i < listSize; i++){
+//        fromServer = in.readLine();
+//        out.println("Next");
+//        hostListInfo[i] = fromServer;
+//        System.out.println("Added: " + hostListInfo[i] + " at index: " + i);
+//        hostLM.addElement(hostListInfo[i]);
+//      }
+//      HttpURLConnection connection = null;
+//      connection = (HttpURLConnection) url.openConnection();
+//      connection.setRequestMethod("GET");
+//      connection.setRequestProperty("Content-Type", 
+//          "application/octet-stream");
+//      connection.setUseCaches(false);
+//      connection.connect();
+//      
+//      ObjectOutputStream wr = new ObjectOutputStream (
+//            connection.getOutputStream());
+//      wr.writeObject(/*m*/"test");
+//      wr.close();
+//      connection.setConnectTimeout(10);
+//      connection.setReadTimeout(10);
+//      connection.getResponseMessage();
+//      connection.getInputStream();
 			
 		} catch (Exception e) {
 			System.out.println("Caught exception");
@@ -235,26 +253,31 @@ public class GUI implements ActionListener{
 				if (fc.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 					selectedFile = fc.getSelectedFile();
 					try {
-
-				        System.out.println("Creating metainfo");
-						Metainfo m = Metainfo.createTorrentFromFile(selectedFile, InetAddress.getLocalHost().toString());
+				    System.out.println("Creating metainfo");
+				    System.out.println("internet addr: " + InetAddress.getLocalHost().getHostAddress());
+            //Metainfo m = Metainfo.createTorrentFromFile(selectedFile, InetAddress.getLocalHost().toString());
 						// Make http request to tracker server
-						URL url = new URL(hostName);
+						URL url = new URL(hostName + NEW_TORRENT_PATH);
 						HttpURLConnection connection = null;
-					    connection = (HttpURLConnection) url.openConnection();
-					    connection.setDoOutput(true);
-					    connection.setUseCaches(false);
-					    connection.setRequestMethod("GET");
-					    connection.setRequestProperty("Content-Type", 
-					        "application/octet-stream");
-					    
-					    ObjectOutputStream wr = new ObjectOutputStream (
-					            connection.getOutputStream());
-				        wr.writeObject(m);
-				        wr.close();
-				        System.out.println("Sent info");
+
+				    connection = (HttpURLConnection) url.openConnection();
+				    connection.setRequestMethod("POST");
+				    connection.setRequestProperty("Content-Type", 
+				        "application/octet-stream");
+				    connection.setUseCaches(false);
+				    connection.setDoOutput(true);
+				    connection.connect();
+				    
+				    ObjectOutputStream wr = new ObjectOutputStream (
+			            connection.getOutputStream());
+		        wr.writeObject(/*m*/"test");
+		        wr.close();
+		        connection.setConnectTimeout(10);
+		        connection.setReadTimeout(10);
+		        connection.getResponseMessage();
+		        System.out.println("Sent info");
 					} catch (Exception ex){
-						ex.printStackTrace();
+					  ex.printStackTrace();
 					}
 				    
 				    
