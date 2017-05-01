@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentMap;
  * Chunks a file.
  * Created by Xavier on 5/1/17.
  */
-public class FileChunk {
+public class ChunkedFile {
     private final String name;
     private final long size;
     private final int chunkSize;
@@ -22,9 +22,11 @@ public class FileChunk {
     private final File file;
     private final ConcurrentMap<String, Pair<Long, Long>> chunks; // Piece hash to piece byte range
 
+    private long written, left; // number of byte's written and left to write.
+
     private boolean seeding;
 
-    public FileChunk(InfoDictionary info, File file, boolean seeding) {
+    public ChunkedFile(InfoDictionary info, File file, boolean seeding) {
         this.file = file;
 
         chunks = new ConcurrentHashMap<>();
@@ -42,6 +44,14 @@ public class FileChunk {
         }
 
         this.seeding = seeding;
+
+        if (this.seeding) {
+            written = size;
+            left = 0;
+        } else {
+            written = 0;
+            left = size;
+        }
     }
 
     /**
@@ -50,10 +60,14 @@ public class FileChunk {
      * @return the chunk
      * @throws IOException
      */
-    public synchronized byte[] readChunk(String chunkHash) throws IOException {
-        if (!seeding) // can't read when we still need to write
-            return null;
+    public byte[] readChunk(String chunkHash) throws IOException {
+        synchronized (this) {
+            if (!seeding) // can't read when we still need to write
+                return null;
+        }
 
+        // no need to acquire lock, we can read concurrently, because one a file is
+        // completely written it will not be modified.
         FileInputStream fis = new FileInputStream(file);
 
         Pair<Long, Long> byteRange = chunks.get(chunkHash);
@@ -100,13 +114,23 @@ public class FileChunk {
         fos.write(data);
 
         fos.close();
+
+        written += data.length;
+        left -= data.length;
+
+        if (left == 0)
+            seeding = true; // we can now seed
+    }
+
+    public synchronized long getWritten() {
+        return written;
+    }
+
+    public synchronized long getLeft() {
+        return left;
     }
 
     public synchronized boolean isSeeding() {
         return seeding;
-    }
-
-    public synchronized void startSeeding() {
-        seeding = true;
     }
 }
