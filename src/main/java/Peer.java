@@ -4,7 +4,7 @@ import java.io.*;
 import java.net.*;
 /**
  * Main class for creating the Peer GUI
- * @author jeffrey
+ * @author Jeffrey Hensel
  *
  */
 
