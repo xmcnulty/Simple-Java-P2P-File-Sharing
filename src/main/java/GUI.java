@@ -5,7 +5,10 @@ import java.io.*;
 import java.net.*;
 import javax.swing.*;
 
+import jtorrent.client.Client;
+import jtorrent.common.JTorrent;
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * GUI class for peer
@@ -13,54 +16,57 @@ import jtorrent.protocols.bittorrent.metainfo.Metainfo;
  *
  */
 public class GUI implements ActionListener{
-	
-	private String CLIENT_NAME = "Peer Service";
+  
+  private String CLIENT_NAME = "Peer Service";
+  private String hostName = "http://10.21.76.195";
+  private int portNumber = 4930;
 
-	private String hostName = "http://10.21.76.195:4930/new_torrent";
-    private int portNumber = 222;
-
-	private JList hostList;
-	private DefaultListModel hostLM;
-	private File selectedFile;
-	private String[] hostListInfo;
-	public static final String refreshTAG = "Refresh List";
-	private static final String ANNOUNCE_PATH = "/announce"; // HTTP url path for announce requests
+  private JList hostList;
+  private DefaultListModel hostLM;
+  private File selectedFile;
+  private String[] hostListInfo;
+  public static final String refreshTAG = "Refresh List";
+  private static final String ANNOUNCE_PATH = "/announce"; // HTTP url path for announce requests
   private static final String NEW_TORRENT_PATH = "/new_torrent";
+  private static final String IMPORT_TORRENT = "Import Torrent";
+  private ConcurrentLinkedQueue<Client> clientList = new ConcurrentLinkedQueue<Client>();
 	
-	public void GUI(){
+  public void GUI(){
 		
-		JFrame guiFrame = new JFrame(CLIENT_NAME);
-		guiFrame.setLayout(new GridLayout(0,2,25,25));
-		guiFrame.setIconImage(Toolkit.getDefaultToolkit().getImage("tmpicon.png"));
-		
-		hostLM = new DefaultListModel();
-		// Add current host points
-		hostList = new JList(hostLM);
-		
-		JPanel westPanel = new JPanel();
-		JButton searchFiles = new JButton("Select File");
-		JButton getFile = new JButton("Get File");
-		
-		JButton refreshButton = new JButton(refreshTAG);
-		westPanel.add(searchFiles);
-		westPanel.add(getFile);
-		westPanel.add(refreshButton);
-		
-		
-		
-		//hostList.addListSelectionListener(this);
-		searchFiles.addActionListener(this);
-		getFile.addActionListener(this);
-		refreshButton.addActionListener(this);
-		
-		guiFrame.add(westPanel);
-		guiFrame.add(new JScrollPane(hostList));
-		
-		guiFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		//guiFrame.getContentPane().add(emptyLable, BorderLayout.CENTER);
-		guiFrame.pack();
-		guiFrame.setVisible(true);
-		guiFrame.setSize(new Dimension(800, 500));
+    JFrame guiFrame = new JFrame(CLIENT_NAME);
+    guiFrame.setLayout(new GridLayout(0,2,25,25));
+    guiFrame.setIconImage(Toolkit.getDefaultToolkit().getImage("tmpicon.png"));
+    
+    hostLM = new DefaultListModel();
+    // Add current host points
+    hostList = new JList(hostLM);
+    
+    JPanel westPanel = new JPanel();
+    JButton searchFiles = new JButton("Select File");
+    JButton getFile = new JButton("Get File");
+    JButton importTor = new JButton(IMPORT_TORRENT);
+    
+    JButton refreshButton = new JButton(refreshTAG);
+    westPanel.add(searchFiles);
+    westPanel.add(getFile);
+    westPanel.add(refreshButton);
+    westPanel.add(importTor);
+
+
+
+    //hostList.addListSelectionListener(this);
+    searchFiles.addActionListener(this);
+    getFile.addActionListener(this);
+    refreshButton.addActionListener(this);
+    
+    guiFrame.add(westPanel);
+    guiFrame.add(new JScrollPane(hostList));
+    
+    guiFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    //guiFrame.getContentPane().add(emptyLable, BorderLayout.CENTER);
+    guiFrame.pack();
+    guiFrame.setVisible(true);
+    guiFrame.setSize(new Dimension(800, 500));
 		
 		
 		
@@ -182,7 +188,7 @@ public class GUI implements ActionListener{
 		}
 		// Request new list from server
 		try {
-		  URL url = new URL(hostName + ANNOUNCE_PATH);
+		  URL url = new URL(hostName + ":" + portNumber + ANNOUNCE_PATH);
 		  BufferedReader in = new BufferedReader(
         new InputStreamReader(url.openStream()));
 
@@ -255,9 +261,15 @@ public class GUI implements ActionListener{
 					try {
 				    System.out.println("Creating metainfo");
 				    System.out.println("internet addr: " + InetAddress.getLocalHost().getHostAddress());
-            //Metainfo m = Metainfo.createTorrentFromFile(selectedFile, InetAddress.getLocalHost().toString());
+            Metainfo m = Metainfo.createTorrentFromFile(selectedFile, 
+                InetAddress.getLocalHost().getHostAddress());
+            JTorrent tor = new JTorrent(m, true);
+            Client cli = Client.newSeeder(InetAddress.getByName(InetAddress.getLocalHost().getHostName()), 
+                portNumber, tor, selectedFile);
+            cli.start();
+            clientList.add(cli);
 						// Make http request to tracker server
-						URL url = new URL(hostName + NEW_TORRENT_PATH);
+						URL url = new URL(hostName + ":" + portNumber + NEW_TORRENT_PATH);
 						HttpURLConnection connection = null;
 
 				    connection = (HttpURLConnection) url.openConnection();
@@ -270,7 +282,7 @@ public class GUI implements ActionListener{
 				    
 				    ObjectOutputStream wr = new ObjectOutputStream (
 			            connection.getOutputStream());
-		        wr.writeObject(/*m*/"test");
+		        wr.writeObject(m);
 		        wr.close();
 		        connection.setConnectTimeout(10);
 		        connection.setReadTimeout(10);
@@ -287,6 +299,33 @@ public class GUI implements ActionListener{
 					System.out.println("No Selection ");
 				}
 				
+				break;
+			case IMPORT_TORRENT:
+			  try {
+          JFileChooser fc2 = new JFileChooser();
+          
+          fc2.setCurrentDirectory(new File(System.getProperty("user.home")));
+          fc2.setDialogTitle("Select File to Import");
+          fc2.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+          fc2.setAcceptAllFileFilterUsed(false);
+  
+          if (fc2.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            selectedFile = fc2.getSelectedFile();
+            Metainfo m = Metainfo.readFromFile(selectedFile.getAbsolutePath());
+            JTorrent tor = new JTorrent(m, true);
+            Client cli = Client.newLeecher(InetAddress.getByName(InetAddress.getLocalHost().getHostName()), 
+                portNumber, tor);
+            cli.start();
+            clientList.add(cli);
+            System.out.println("getCurrentDirectory(): " + fc2.getCurrentDirectory());
+            System.out.println("getSelectedFile() : " + selectedFile);
+          } else {
+            System.out.println("No Selection ");
+          }
+			  } catch (Exception ex){
+          ex.printStackTrace();
+        }
+			  
 				break;
 			case refreshTAG:
 				updateList();

@@ -1,6 +1,6 @@
 package jtorrent.client;
 
-import javafx.util.Pair;
+//import javafx.util.Pair;
 import jtorrent.common.Utils;
 import jtorrent.protocols.bittorrent.metainfo.InfoDictionary;
 
@@ -14,6 +14,20 @@ import java.util.concurrent.ConcurrentMap;
  * Created by Xavier on 5/1/17.
  */
 public class ChunkedFile {
+  
+  public class Pair<L,R> {
+    private L l;
+    private R r;
+    public Pair(L l, R r){
+        this.l = l;
+        this.r = r;
+    }
+    public L getL(){ return l; }
+    public R getR(){ return r; }
+    public void setL(L l){ this.l = l; }
+    public void setR(R r){ this.r = r; }
+}
+  
     private final String name;
     private final long size;
     private final long chunkSize;
@@ -29,7 +43,7 @@ public class ChunkedFile {
     public ChunkedFile(InfoDictionary info, File file, boolean seeding) {
         this.file = file;
 
-        chunks = new ConcurrentHashMap<>();
+        chunks = new ConcurrentHashMap<String, Pair<Long, Long>>();
 
         Dictionary<String, Object> infoValues = info.get();
         name = (String) infoValues.get(InfoDictionary.NAME_KEY);
@@ -75,7 +89,7 @@ public class ChunkedFile {
         if (byteRange == null)
             return null;
 
-        fis.getChannel().position(byteRange.getKey());
+        fis.getChannel().position(byteRange.getL());
 
         byte[] bytes = new byte[(int) chunkSize];
 
@@ -110,7 +124,7 @@ public class ChunkedFile {
 
         FileOutputStream fos = new FileOutputStream(file);
 
-        fos.getChannel().position(byteRange.getKey());
+        fos.getChannel().position(byteRange.getL());
         fos.write(data);
 
         fos.close();

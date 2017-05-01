@@ -1,6 +1,7 @@
 package jtorrent.common;
 
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
+//import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
+import java.io.ByteArrayOutputStream;
 import jtorrent.protocols.bittorrent.metainfo.InfoDictionary;
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 
@@ -39,12 +40,12 @@ public class JTorrent {
         this.seeder = seeder;
 
         // need to create a hash of the source file's information
-        ByteOutputStream bos = new ByteOutputStream();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream out = new ObjectOutputStream(bos);
         out.writeObject(metainfo.getInfo());
         out.flush();
 
-        byte[] encodedInfo = bos.getBytes();
+        byte[] encodedInfo = bos.toByteArray();
         info_hash = Utils.hash(encodedInfo);
 
         // attempt to get the tracker from the metainfo file.
