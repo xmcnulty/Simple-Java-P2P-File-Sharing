@@ -6,15 +6,18 @@ import jtorrent.common.JTorrent;
 import jtorrent.common.Utils;
 import jtorrent.tracker.JTracker;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.*;
 import java.nio.channels.SocketChannel;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Client that shares and downloads a torrent.
@@ -36,6 +39,8 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
     private Thread announceThread;
 
+    private final AtomicBoolean stopped;
+
     private Client(InetAddress address, int port, JTorrent torrent) throws IOException {
         this.address = address;
         this.torrent = torrent;
@@ -49,6 +54,8 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
         connectionHandler = new ClientConnectionHandler(this.torrent, this.address, port, Utils.bytesToHex(id));
         connectionHandler.addListener(this);
+
+        stopped = new AtomicBoolean(false);
     }
 
     /**
@@ -87,6 +94,7 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
     public void start() {
         setState(JPeer.State.STARTED);
+        System.out.println("Starting client: " + self.getPeerId());
 
         if (announceThread == null || !announceThread.isAlive()) {
             try {
@@ -126,46 +134,59 @@ public class Client implements ClientConnectionHandler.PeerListener {
         private final ConcurrentMap<String, Object> jsonValues;
 
         public Announcer() throws MalformedURLException {
-            String addr = "http://" + torrent.getAddress();
+            String addr = "http://" + torrent.getAddress() + "/announce";
             System.out.println("Announcing to: " + addr);
             url = new URL(addr);
 
             jsonValues = new ConcurrentHashMap<>();
             jsonValues.put("peer_id", self.getPeerId());
             jsonValues.put("info_hash", torrent.infoHash());
+            jsonValues.put("ip", self.getIp());
+            jsonValues.put("port", (Integer) self.getPort());
         }
 
         @Override
         public void run() {
-            try {
-                // add the state to the JSON values
-                jsonValues.put("state", self.getState().name());
-                jsonValues.put("left", chunkedFile.getLeft());
-                jsonValues.put("downloaded", chunkedFile.getWritten());
-                jsonValues.put("uploaded", 0);
+            while (!stopped.get()) {
+                try {
+                    // add the state to the JSON values
+                    jsonValues.put("event", self.getState().name());
+                    jsonValues.put("left", chunkedFile.getLeft());
+                    jsonValues.put("downloaded", chunkedFile.getWritten());
+                    jsonValues.put("uploaded", 0);
 
-                String json = new Gson().toJson(jsonValues);
+                    String json = new Gson().toJson(jsonValues);
 
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("POST");
-                connection.setRequestProperty("Content-Type",
-                        "application/json");
-                connection.setUseCaches(false);
-                connection.setDoOutput(true);
-                connection.connect();
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("POST");
+                    connection.setRequestProperty("Content-Type",
+                            "application/json");
+                    connection.setRequestProperty("charset", "utf-8");
+                    connection.setFixedLengthStreamingMode(json.length());
+                    connection.setUseCaches(false);
+                    connection.setDoOutput(true);
+                    connection.connect();
 
-                PrintStream ps = new PrintStream(connection.getOutputStream());
-                ps.print(json);
-                ps.flush();
-                ps.close();
+                    PrintStream ps = new PrintStream(connection.getOutputStream());
+                    ps.print(json);
+                    ps.flush();
+                    ps.close();
 
-                connection.setConnectTimeout(10);
-                connection.setReadTimeout(10);
-                //connection.getResponseMessage();
+                    connection.setConnectTimeout(10);
+                    connection.setReadTimeout(10);
+                    int respcode = connection.getResponseCode();
 
-                Thread.sleep(announceIntervalSeconds * 1000);
-            } catch (Exception e) {
-                // ignore
+                    if (respcode == 200) {
+                        Scanner in = new Scanner(connection.getInputStream());
+
+                        String respBody = in.next();
+                        System.out.println(respBody);
+                    }
+
+                    Thread.sleep(announceIntervalSeconds * 1000);
+                } catch (Exception e) {
+                    // ignore
+                }
             }
         }
     }

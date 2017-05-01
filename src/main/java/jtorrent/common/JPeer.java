@@ -125,6 +125,6 @@ public class JPeer {
 
         JPeer p = (JPeer) obj;
 
-        return peerId == p.peerId;
+        return peerId.equals(p.peerId);
     }
 }
