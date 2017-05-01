@@ -1,6 +1,7 @@
 package jtorrent.client;
 
 import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
 import jtorrent.common.JPeer;
 import jtorrent.common.JTorrent;
 import jtorrent.common.Utils;
@@ -12,9 +13,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.*;
 import java.nio.channels.SocketChannel;
-import java.util.Random;
-import java.util.Scanner;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,6 +39,8 @@ public class Client implements ClientConnectionHandler.PeerListener {
     private Thread announceThread;
 
     private final AtomicBoolean stopped;
+
+    private ArrayList<JPeer> seedingPeers;
 
     private Client(InetAddress address, int port, JTorrent torrent) throws IOException {
         this.address = address;
@@ -105,6 +106,14 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
             announceThread.start();
         }
+    }
+
+    public synchronized ArrayList<JPeer> getSeedingPeers() {
+        return seedingPeers;
+    }
+
+    public synchronized void setSeedingPeers(ArrayList<JPeer> peers) {
+        seedingPeers = peers;
     }
 
     public synchronized JPeer.State getState() {
@@ -181,11 +190,28 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
                         String respBody = in.next();
                         System.out.println(respBody);
+                        Map<String, Object> responseRoot= new Gson().fromJson(respBody, Map.class);
+
+                        // update the seeding peers according to the tracker.
+                        ArrayList<LinkedTreeMap<String, Object>> seeders =
+                                (ArrayList<LinkedTreeMap<String, Object>>) responseRoot.get("peers");
+
+                        ArrayList<JPeer> newSeeders = new ArrayList<>();
+
+                        for (LinkedTreeMap<String, Object> d : seeders) {
+                            String ip = (String) d.get("ip");
+                            int port = ((Double) d.get("port")).intValue();
+                            String id = (String) d.get("peer_id");
+
+                            newSeeders.add(new JPeer(ip, port, Utils.hexStringToByteArray(id)));
+                        }
+
+                        setSeedingPeers(newSeeders);
                     }
 
                     Thread.sleep(announceIntervalSeconds * 1000);
                 } catch (Exception e) {
-                    // ignore
+                    e.printStackTrace();
                 }
             }
         }
