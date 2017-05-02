@@ -55,16 +55,22 @@ public class AnnounceHandler implements org.simpleframework.http.core.Container 
                 System.out.println(metainfo.getJSON());
 
                 TRACKER.addTorrent(metainfo);
+
+                response.setCode(200);
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("Execption");
                 response.setCode(400);
                 response.setDescription("Error grabbing object.");
+            } finally {
+                try {
+                    response.getOutputStream().close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 return;
             }
-
-            response.setCode(200);
-            return;
         }
 
         if (!ANNOUNCE_PATH.equals(request.getPath().toString())) {
