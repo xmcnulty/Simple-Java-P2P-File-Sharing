@@ -121,7 +121,7 @@ public class JTracker {
         try {
             TorrentRef torrentRef = new TorrentRef(torrent);
             TORRENTS.put(torrentRef.infoHash(), torrentRef);
-            System.out.println("Added torrent " + torrent.getName());
+            System.out.println("Added torrent " + torrentRef.infoHash());
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (IOException e) {

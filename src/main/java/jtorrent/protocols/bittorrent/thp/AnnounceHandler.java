@@ -76,6 +76,13 @@ public class AnnounceHandler implements org.simpleframework.http.core.Container 
         if (!ANNOUNCE_PATH.equals(request.getPath().toString())) {
             response.setCode(404);
             response.setDescription("Not Found");
+
+            try {
+                response.getOutputStream().close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             return;
         }
 
@@ -114,6 +121,12 @@ public class AnnounceHandler implements org.simpleframework.http.core.Container 
             response.setCode(400);
             response.setDescription("Invalid info_hash.");
 
+            try {
+                response.getOutputStream().close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             return;
         }
 
@@ -132,6 +145,12 @@ public class AnnounceHandler implements org.simpleframework.http.core.Container 
             response.setContentType("text/plain");
             response.setCode(400);
             response.setDescription("Bad request.");
+
+            try {
+                response.getOutputStream().close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
             return;
         }
