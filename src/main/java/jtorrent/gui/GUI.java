@@ -255,7 +255,7 @@ public class GUI implements ActionListener{
         connection.getResponseCode();
         connection.disconnect();
         System.out.println("Sent info");
-        
+        System.out.println("Setting up seeder");
         JTorrent tor = new JTorrent(m, true);
         System.out.println("New Torrent written to: " + m.writeToFile());
         Client cli = Client.newSeeder(Inet4Address.getLocalHost(), 
@@ -263,6 +263,7 @@ public class GUI implements ActionListener{
         cli.start();
         clientList.add(cli);
         hostLM.addElement(cli.getTorrent().getName() + " Current State: " + cli.getState().name());
+        System.out.println("Became a seeder");
       } catch (Exception ex){
         ex.printStackTrace();
       }
@@ -291,7 +292,7 @@ public class GUI implements ActionListener{
         selectedFile = fc2.getSelectedFile();
         Metainfo m = Metainfo.readFromFile(selectedFile.getAbsolutePath());
         JTorrent tor = new JTorrent(m, true);
-        Client cli = Client.newLeecher(InetAddress.getByName(InetAddress.getLocalHost().getHostName()), 
+        Client cli = Client.newLeecher(Inet4Address.getLocalHost(), 
             portNumber, tor);
         cli.start();
         clientList.add(cli);
