@@ -3,6 +3,7 @@ package jtorrent.client;
 import jtorrent.common.JPeer;
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -67,6 +68,8 @@ public class LeecherHandler extends Thread {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            remainingChunks = file.neededChunks();
         }
 
         client.startSeeding();
@@ -99,20 +102,12 @@ public class LeecherHandler extends Thread {
                     chunkHash = connection.getResponseMessage();
 
                     InputStream is = connection.getInputStream();
-                    byte[] bytes = new byte[(int) Metainfo.CHUNK_SIZE_BYTES];
 
-                    int read = is.read(bytes);
+                    file.writeChunk(chunkHash, is);
+
                     is.close();
 
-                    if (read < Metainfo.CHUNK_SIZE_BYTES) {
-                        byte[] b = bytes;
-                        bytes = new byte[read];
-
-                        for (int i = 0; i < read; i++)
-                            bytes[i] = b[i];
-                    }
-
-                    file.writeChunk(chunkHash, bytes);
+                    System.out.println("read bytes");
                 }
             } catch (SocketTimeoutException se) {
                 System.out.println("Failed to connect");

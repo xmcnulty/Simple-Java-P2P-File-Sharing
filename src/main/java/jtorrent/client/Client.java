@@ -150,6 +150,7 @@ public class Client {
      * It is now okay to start seeding. Called by the leecher handler.
      */
     public void startSeeding() {
+        System.out.println("Now seeding");
         if (chunkedFile.isSeeding() && (seederThread == null || !seederThread.isAlive())) {
             seederThread = new Thread(() -> {
                 try {
@@ -202,6 +203,11 @@ public class Client {
                     jsonValues.put("uploaded", 0);
 
                     String json = new Gson().toJson(jsonValues);
+
+                    jsonValues.remove("event");
+                    jsonValues.remove("left");
+                    jsonValues.remove("downloaded");
+                    jsonValues.remove("uploaded");
 
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("POST");
