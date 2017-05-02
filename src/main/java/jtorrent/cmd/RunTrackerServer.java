@@ -3,11 +3,9 @@ package jtorrent.cmd;
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 import jtorrent.tracker.JTracker;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 
 /**
  * Runs a tracker server from the command line.

@@ -154,14 +154,9 @@ public class Client {
         if (chunkedFile.isSeeding() && (seederThread == null || !seederThread.isAlive())) {
             seederThread = new Thread(() -> {
                 try {
-                    leecherThread.join();
-                    setState(JPeer.State.COMPLETED);
-
                     connection.connect(SOCKET_ADDRESS);
                     System.out.println("Starting seeder listener on: " + SOCKET_ADDRESS.toString());
                 } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }, "seeder-thread");
