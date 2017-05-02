@@ -39,7 +39,7 @@ public class LeecherHandler extends Thread {
         while (!remainingChunks.isEmpty()) {
             ArrayList<JPeer> seeders = client.getSeedingPeers();
 
-            if (seeders.isEmpty()) { // no available peers, sleep and wait
+            if (seeders == null || seeders.isEmpty()) { // no available peers, sleep and wait
                 System.out.println("No available seeders, waiting");
                 try {
                     Thread.sleep(5000);
@@ -75,13 +75,11 @@ public class LeecherHandler extends Thread {
     private class LeecherTask implements Runnable {
         String ip, chunkHash;
         int port;
-        CountDownLatch latch;
 
         public LeecherTask(String ip, String chunkHash, int port) {
             this.ip = ip;
             this.chunkHash = chunkHash;
             this.port = port;
-            this.latch = latch;
         }
 
         @Override
@@ -102,9 +100,9 @@ public class LeecherHandler extends Thread {
 
                     InputStream is = connection.getInputStream();
                     byte[] bytes = new byte[(int) Metainfo.CHUNK_SIZE_BYTES];
-                    is.close();
 
                     int read = is.read(bytes);
+                    is.close();
 
                     if (read < Metainfo.CHUNK_SIZE_BYTES) {
                         byte[] b = bytes;

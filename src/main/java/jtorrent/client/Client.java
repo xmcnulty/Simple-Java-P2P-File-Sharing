@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * Created by Xavier on 4/30/17.
  */
-public class Client implements ClientConnectionHandler.PeerListener {
+public class Client {
     private static final String BITTORRENT_ID_PREFIX = "-TO0042-";
 
     private Connection connection;
@@ -167,16 +167,6 @@ public class Client implements ClientConnectionHandler.PeerListener {
 
             seederThread.start();
         }
-    }
-
-    @Override
-    public void handleNewPeerConnection(SocketChannel channel, byte[] peerId) {
-
-    }
-
-    @Override
-    public void handleFailedConnection(JPeer peer) {
-
     }
     
     public JTorrent getTorrent(){ return torrent; }
