@@ -141,7 +141,7 @@ public class ChunkedFile {
         while (totalWritten < chunkSize && (read = data.read(buf)) > 0) {
             totalWritten += read;
 
-            fos.write(buf, 0, read);
+            fos.write(buf, totalWritten, read);
         }
 
         fos.close();

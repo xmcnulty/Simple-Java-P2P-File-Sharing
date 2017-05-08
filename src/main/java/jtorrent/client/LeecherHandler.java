@@ -94,7 +94,7 @@ public class LeecherHandler extends Thread {
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
 
-                connection.setConnectTimeout(5000);
+                connection.setConnectTimeout(100);
 
                 connection.connect();
 
