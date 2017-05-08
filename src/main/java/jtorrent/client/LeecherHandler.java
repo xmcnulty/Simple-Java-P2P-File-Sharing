@@ -3,6 +3,7 @@ package jtorrent.client;
 import jtorrent.common.JPeer;
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -39,7 +40,7 @@ public class LeecherHandler extends Thread {
         while (!remainingChunks.isEmpty()) {
             ArrayList<JPeer> seeders = client.getSeedingPeers();
 
-            if (seeders.isEmpty()) { // no available peers, sleep and wait
+            if (seeders == null || seeders.isEmpty()) { // no available peers, sleep and wait
                 System.out.println("No available seeders, waiting");
                 try {
                     Thread.sleep(5000);
@@ -67,6 +68,8 @@ public class LeecherHandler extends Thread {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
+            remainingChunks = file.neededChunks();
         }
 
         client.startSeeding();
@@ -75,13 +78,11 @@ public class LeecherHandler extends Thread {
     private class LeecherTask implements Runnable {
         String ip, chunkHash;
         int port;
-        CountDownLatch latch;
 
         public LeecherTask(String ip, String chunkHash, int port) {
             this.ip = ip;
             this.chunkHash = chunkHash;
             this.port = port;
-            this.latch = latch;
         }
 
         @Override
@@ -93,7 +94,7 @@ public class LeecherHandler extends Thread {
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("GET");
 
-                connection.setConnectTimeout(5000);
+                connection.setConnectTimeout(100);
 
                 connection.connect();
 
@@ -101,20 +102,12 @@ public class LeecherHandler extends Thread {
                     chunkHash = connection.getResponseMessage();
 
                     InputStream is = connection.getInputStream();
-                    byte[] bytes = new byte[(int) Metainfo.CHUNK_SIZE_BYTES];
+
+                    file.writeChunk(chunkHash, is);
+
                     is.close();
 
-                    int read = is.read(bytes);
-
-                    if (read < Metainfo.CHUNK_SIZE_BYTES) {
-                        byte[] b = bytes;
-                        bytes = new byte[read];
-
-                        for (int i = 0; i < read; i++)
-                            bytes[i] = b[i];
-                    }
-
-                    file.writeChunk(chunkHash, bytes);
+                    System.out.println("read bytes");
                 }
             } catch (SocketTimeoutException se) {
                 System.out.println("Failed to connect");

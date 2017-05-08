@@ -42,7 +42,12 @@ public class JTorrent {
         // need to create a hash of the source file's information
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutputStream out = new ObjectOutputStream(bos);
-        out.writeObject(metainfo.getInfo());
+
+        byte [][] hashes = (byte[][]) metainfo.getInfo().get().get(InfoDictionary.PIECES_KEY);
+
+        for (byte[] b : hashes) {
+            out.write(b);
+        }
         out.flush();
 
         byte[] encodedInfo = bos.toByteArray();

@@ -122,8 +122,8 @@ public class ChunkedFile {
      * @param chunkHash Hash of the chunk to write to.
      * @param data Data to write.
      */
-    public synchronized void writeChunk(String chunkHash, byte[] data) throws IOException {
-        if (data == null || data.length > chunkSize)
+    public synchronized void writeChunk(String chunkHash, InputStream data) throws IOException {
+        if (data == null)
             return;
 
         Pair<Long, Long> byteRange = chunks.get(chunkHash);
@@ -134,14 +134,22 @@ public class ChunkedFile {
         FileOutputStream fos = new FileOutputStream(file);
 
         fos.getChannel().position(byteRange.getL());
-        fos.write(data);
+        byte[] buf = new byte[(int) chunkSize];
+        int totalWritten = 0;
+        int read = 0;
+
+        while (totalWritten < chunkSize && (read = data.read(buf)) > 0) {
+            totalWritten += read;
+
+            fos.write(buf, totalWritten, read);
+        }
 
         fos.close();
 
         writtenChunks.add(chunkHash);
 
-        written += data.length;
-        left -= data.length;
+        written += totalWritten;
+        left -= totalWritten;
 
         if (left == 0)
             seeding = true; // we can now seed

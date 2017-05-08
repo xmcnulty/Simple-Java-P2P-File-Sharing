@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * Created by Xavier on 4/30/17.
  */
-public class Client implements ClientConnectionHandler.PeerListener {
+public class Client {
     private static final String BITTORRENT_ID_PREFIX = "-TO0042-";
 
     private Connection connection;
@@ -150,33 +150,19 @@ public class Client implements ClientConnectionHandler.PeerListener {
      * It is now okay to start seeding. Called by the leecher handler.
      */
     public void startSeeding() {
+        System.out.println("Now seeding");
         if (chunkedFile.isSeeding() && (seederThread == null || !seederThread.isAlive())) {
             seederThread = new Thread(() -> {
                 try {
-                    leecherThread.join();
-                    setState(JPeer.State.COMPLETED);
-
                     connection.connect(SOCKET_ADDRESS);
                     System.out.println("Starting seeder listener on: " + SOCKET_ADDRESS.toString());
                 } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }, "seeder-thread");
 
             seederThread.start();
         }
-    }
-
-    @Override
-    public void handleNewPeerConnection(SocketChannel channel, byte[] peerId) {
-
-    }
-
-    @Override
-    public void handleFailedConnection(JPeer peer) {
-
     }
     
     public JTorrent getTorrent(){ return torrent; }
@@ -212,6 +198,11 @@ public class Client implements ClientConnectionHandler.PeerListener {
                     jsonValues.put("uploaded", 0);
 
                     String json = new Gson().toJson(jsonValues);
+
+                    jsonValues.remove("event");
+                    jsonValues.remove("left");
+                    jsonValues.remove("downloaded");
+                    jsonValues.remove("uploaded");
 
                     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                     connection.setRequestMethod("POST");

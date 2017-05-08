@@ -21,7 +21,7 @@ public final class Metainfo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public static final long CHUNK_SIZE_BYTES = 100000;
+    public static final long CHUNK_SIZE_BYTES = 100;
 
     // Keys for dictionary.
     public static final String ANNOUNCE_KEY = "announce",

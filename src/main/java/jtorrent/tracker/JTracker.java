@@ -51,8 +51,6 @@ public class JTracker {
             @Override
             public void run() {
                 while (!stopped.get()) {
-                    System.out.println(this.getName() + " cleaning up.");
-
                     for (TorrentRef torrent : TORRENTS.values())
                         torrent.removeExpired();
 
@@ -84,7 +82,7 @@ public class JTracker {
         if (announceThread == null || !announceThread.isAlive()) {
             announceThread = new Thread(() -> {
                 try {
-                    System.out.println("Starting tracker at: " + url());
+                    System.out.println("Starting tracker at: " + url().replace("/announce", ""));
                     CONNECTION.connect(ADDRESS);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -123,7 +121,7 @@ public class JTracker {
         try {
             TorrentRef torrentRef = new TorrentRef(torrent);
             TORRENTS.put(torrentRef.infoHash(), torrentRef);
-            System.out.println("Added torrent " + torrent.getName());
+            System.out.println("Added torrent " + torrentRef.infoHash());
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (IOException e) {
