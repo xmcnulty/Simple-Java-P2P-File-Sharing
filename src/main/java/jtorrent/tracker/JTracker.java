@@ -5,6 +5,8 @@ import jtorrent.common.JTorrent;
 import jtorrent.common.Utils;
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 import jtorrent.protocols.bittorrent.thp.AnnounceHandler;
+import jtorrent.protocols.bittorrent.thp.AnnounceHandlerRMI;
+import jtorrent.protocols.bittorrent.thp.AnnounceRMIServer;
 import org.simpleframework.http.core.ContainerSocketProcessor;
 import org.simpleframework.transport.connect.Connection;
 import org.simpleframework.transport.connect.SocketConnection;
@@ -34,6 +36,10 @@ public class JTracker {
     private Thread announceThread; // thread used to handle
     private Thread peerCleanupThread; // periodically cleans up expired peers
 
+    // RMI stuff
+    private AnnounceHandlerRMI announceHandlerRMI;
+    private AnnounceRMIServer announceRMIServer;
+
     private final AtomicBoolean stopped;
 
     public JTracker(InetSocketAddress address) throws IOException {
@@ -62,6 +68,8 @@ public class JTracker {
                 }
             }
         };
+
+        announceHandlerRMI = new AnnounceHandlerRMI(TORRENTS, this);
     }
 
     /**
@@ -93,6 +101,16 @@ public class JTracker {
             announceThread.start();
         }
 
+        if (announceRMIServer == null || !announceRMIServer.isRunning()) {
+            try {
+                announceRMIServer = new AnnounceRMIServer(announceHandlerRMI);
+                announceRMIServer.start(ADDRESS.getPort() + 1);
+            } catch (Exception e) {
+                System.out.println("Unable to start RMI server.");
+                e.printStackTrace();
+            }
+        }
+
         if (!peerCleanupThread.isAlive()) {
             peerCleanupThread.start();
         }
@@ -102,6 +120,10 @@ public class JTracker {
      * Stops the tracker server.
      */
     public void stop() {
+
+        announceRMIServer.stop();
+        announceRMIServer = null;
+
         stopped.set(true);
 
         try {

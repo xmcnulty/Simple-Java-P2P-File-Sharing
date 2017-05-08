@@ -4,6 +4,7 @@ import jtorrent.common.JPeer;
 import jtorrent.tracker.JTracker;
 
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentMap;
 
@@ -15,19 +16,18 @@ import java.util.concurrent.ConcurrentMap;
  *
  * Created by Xavier on 5/8/17.
  */
-public class AnnounceHandlerRMI implements THPRemote {
+public class AnnounceHandlerRMI extends UnicastRemoteObject implements THPRemote {
 
     private final ConcurrentMap<String, JTracker.TorrentRef> TORRENTS;
-    private final JTracker TRACKER;
 
     /**
      * Constructor.
      * @param TORRENTS Map of torrents that the owning tracker is watching.
      * @param TRACKER The owning Tracker server.
      */
-    public AnnounceHandlerRMI(ConcurrentMap<String, JTracker.TorrentRef> TORRENTS, JTracker TRACKER) {
+    public AnnounceHandlerRMI(ConcurrentMap<String, JTracker.TorrentRef> TORRENTS, JTracker TRACKER) throws RemoteException {
+        super();
         this.TORRENTS = TORRENTS;
-        this.TRACKER = TRACKER;
     }
 
     /**
