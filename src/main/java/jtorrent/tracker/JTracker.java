@@ -150,10 +150,6 @@ public class JTracker {
 
         JTorrent torrent; // torrent that this peer is following
 
-        private long bytesUploaded = 0, // number of bytes to uploaded by this peer.
-                bytesDowloaded = 0, // number of bytes downloaded by this peer.
-                bytesLeft = 0; // number of bytes left for this peer to downnload.
-
         /**
          * Creates a new peer reference for this tracker to follow.
          * @param torrent Torrent that the peer is using.
@@ -323,7 +319,7 @@ public class JTracker {
                     continue;
                 }
 
-                if (p.bytesLeft == 0) // peer needs to have all of the file
+                if (p.getBytesLeft() == 0) // peer needs to have all of the file
                     validPeers.add(p);
             }
 

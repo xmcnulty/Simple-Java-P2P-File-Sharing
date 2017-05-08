@@ -7,6 +7,7 @@ import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;

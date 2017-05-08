@@ -12,7 +12,7 @@ import java.util.Map;
  * @author Xavier McNulty
  * Created by Xavier on 4/25/17.
  */
-public class JPeer {
+public class JPeer implements java.io.Serializable {
 
     /**
      * Possible states for a peer exchanging on this torrent.
@@ -32,6 +32,10 @@ public class JPeer {
 
     private String peerId;
     protected State state; // current state of this peer.
+
+    protected long bytesUploaded = 0, // number of bytes to uploaded by this peer.
+            bytesDowloaded = 0, // number of bytes downloaded by this peer.
+            bytesLeft = 0; // number of bytes left for this peer to download.
 
     public JPeer(String ip, int port, byte[] id) {
         if (id == null || id.length != 20)
@@ -126,5 +130,17 @@ public class JPeer {
         JPeer p = (JPeer) obj;
 
         return peerId.equals(p.peerId);
+    }
+
+    public long getBytesUploaded() {
+        return bytesUploaded;
+    }
+
+    public long getBytesDowloaded() {
+        return bytesDowloaded;
+    }
+
+    public long getBytesLeft() {
+        return bytesLeft;
     }
 }
