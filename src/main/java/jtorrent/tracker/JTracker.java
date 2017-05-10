@@ -42,6 +42,11 @@ public class JTracker {
 
     private final AtomicBoolean stopped;
 
+    /**
+     * Constructs a new tracker server.
+     * @param address Socket address for the server to listen on.
+     * @throws IOException If socket connection fails.
+     */
     public JTracker(InetSocketAddress address) throws IOException {
         this.ADDRESS = address;
         TORRENTS = new ConcurrentHashMap<>();
@@ -84,7 +89,8 @@ public class JTracker {
     }
 
     /**
-     * Starts running the tracker server.
+     * Starts running the tracker server by listening for incoming client messages on both
+     * the socket and RMI interfaces.
      */
     public void start() {
         if (announceThread == null || !announceThread.isAlive()) {
@@ -136,7 +142,8 @@ public class JTracker {
     }
 
     /**
-     * Adds a torrent to this tracker.
+     * Adds a torrent to this tracker, called by either a {@link AnnounceHandler socket announce handler}
+     * or a {@link AnnounceHandlerRMI RMI announce handler}.
      * @param torrent Torrent
      */
     public void addTorrent(Metainfo torrent) {
@@ -154,16 +161,17 @@ public class JTracker {
     }
 
     /**
-     * Removes a torrent from this tracker.
-     * @param hash
-     * @return
+     * Removes a torrent from this tracker. called by either a {@link AnnounceHandler socket announce handler}
+     * or a {@link AnnounceHandlerRMI RMI announce handler}.
+     * @param hash SHA-1 hash of the torrent to be removed.
+     * @return Remove torrent.
      */
     public TorrentRef removeTorrent(String hash) {
         return TORRENTS.remove(hash);
     }
 
     /**
-     * A reference to a peer that this tracker is following.
+     * A class used by the server to reference a peer that is using this server.
      */
     public class PeerRef extends JPeer {
         // if a peer does not announce itself in this amount of time it will not be used by the tracker.

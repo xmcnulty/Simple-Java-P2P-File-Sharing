@@ -9,24 +9,39 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
- * Serves file chunks to those who request them.
+ * Listens to incoming socket connections from other peers requesting file chunks.
+ * Uses an {@link Executor exectutor} to process requests in parallel.
+ *
+ * @author Xavier McNulty
  * Created by Xavier on 5/1/17.
  */
 public class SeederHandler implements org.simpleframework.http.core.Container {
     private ChunkedFile file;
     private final Executor executor;
 
+    /**
+     * Constructor.
+     * @param file File.
+     */
     public SeederHandler(ChunkedFile file) {
         this.file = file;
         executor = Executors.newFixedThreadPool(5);
     }
 
+    /**
+     * Called for each incoming request.
+     * @param request
+     * @param response
+     */
     @Override
     public void handle(Request request, Response response) {
         System.out.println("Received seed request.");
         executor.execute(new Reader(request, response));
     }
 
+    /**
+     * Private Runnable class that allows the handler to serve requests in parallel.
+     */
     private class Reader implements Runnable {
         Request request;
         Response response;

@@ -12,13 +12,22 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Chunks a file.
+ * Wrapper class that contains a file being shared by peers, allowing them to read and write
+ * the file in chunks. Written in a thread safe manner.
+ *
+ * @author Xavier McNulty
  * Created by Xavier on 5/1/17.
  */
 public class ChunkedFile {
   
-    // Given as a solution on: http://stackoverflow.com/questions/4777622/creating-a-list-of-pairs-in-java
-    // Not concurrent in itself
+    //
+
+    /**
+     * Given as a solution on: http://stackoverflow.com/questions/4777622/creating-a-list-of-pairs-in-java
+     * Not concurrent in itself.
+     * @param <L> Left item in Pair.
+     * @param <R> Right item in Pair.
+     */
     public class Pair<L,R> {
       private L l;
       private R r;
@@ -26,6 +35,7 @@ public class ChunkedFile {
           this.l = l;
           this.r = r;
       }
+
       public L getL(){ return l; }
       public R getR(){ return r; }
       public void setL(L l){ this.l = l; }
@@ -45,6 +55,12 @@ public class ChunkedFile {
 
     private boolean seeding;
 
+    /**
+     * Creates a chunked file to be used by a {@link Client client}.
+     * @param info Information about the file.
+     * @param file The file itself.
+     * @param seeding True if the file is being seeded.
+     */
     public ChunkedFile(InfoDictionary info, File file, boolean seeding) {
         this.file = file;
 
@@ -78,9 +94,9 @@ public class ChunkedFile {
     }
 
     /**
-     * Reads a particular chunk of the file
-     * @param chunkHash Hash of the chunk
-     * @return the chunk
+     * Reads a particular chunk of the file.
+     * @param chunkHash SHA-1 hash of the chunk to be read.
+     * @return Read chunk of the file.
      * @throws IOException
      */
     public byte[] readChunk(String chunkHash) throws IOException {
@@ -119,7 +135,7 @@ public class ChunkedFile {
 
     /**
      * Writes data to a chunk of the file.
-     * @param chunkHash Hash of the chunk to write to.
+     * @param chunkHash SHA-1 Hash of the chunk to write to.
      * @param data Data to write.
      */
     public synchronized void writeChunk(String chunkHash, InputStream data) throws IOException {
@@ -157,7 +173,7 @@ public class ChunkedFile {
 
     /**
      * Returns a list of chunks that are still needed of the file.
-     * @return
+     * @return Set of SHA-1 chunk hashes that are still need for the file to be complete.
      */
     public synchronized Set<String> neededChunks() {
         Set<String> needed = chunks.keySet();
@@ -166,14 +182,26 @@ public class ChunkedFile {
         return needed;
     }
 
+    /**
+     * Byte's written to the file.
+     * @return Current count of bytes written to file.
+     */
     public synchronized long getWritten() {
         return written;
     }
 
+    /**
+     * Number of bytes that are needed to complete the file.
+     * @return Byte count of remaining bytes needed for the file.
+     */
     public synchronized long getLeft() {
         return left;
     }
 
+    /**
+     * Seeding state of this file.
+     * @return {@code true} if seeding.
+     */
     public synchronized boolean isSeeding() {
         return seeding;
     }

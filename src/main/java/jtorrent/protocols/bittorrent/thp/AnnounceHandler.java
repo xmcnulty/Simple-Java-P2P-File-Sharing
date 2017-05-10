@@ -18,11 +18,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Handles Announce messages for a container using the simpleframework.http
+ * Handles Announce messages from socket connections for a container using the simpleframework.http
  * library for handling http messages on the URL http://ip:port/announce
- * of the tracker.
+ * of the tracker server.
  *
- * Keeps a reference to a map of torrents known to the tracker.
+ * Keeps a reference to a map of torrents known to the server.
  *
  * @author Xavier McNulty
  * Created by Xavier on 4/27/17.
@@ -35,11 +35,21 @@ public class AnnounceHandler implements org.simpleframework.http.core.Container 
     private final ConcurrentMap<String, JTracker.TorrentRef> TORRENTS;
     private final JTracker TRACKER;
 
+    /**
+     * Construct a new handler.
+     * @param TORRENTS Map of torrents for this handler to reference.
+     * @param tracker Owning {@link JTracker tracker} of this handler.
+     */
     public AnnounceHandler(ConcurrentMap<String, JTracker.TorrentRef> TORRENTS, JTracker tracker) {
         this.TORRENTS = TORRENTS;
         this.TRACKER = tracker;
     }
 
+    /**
+     * Processes incoming socket connections from clients on the network.
+     * @param request
+     * @param response
+     */
     @Override
     public void handle(Request request, Response response) {
         System.out.println("HTTP message received. "  + request.getPath().toString());
@@ -202,8 +212,8 @@ public class AnnounceHandler implements org.simpleframework.http.core.Container 
 
     /**
      * Crafts the JSON response body.
-     * @param torrent
-     * @return
+     * @param torrent Torrent file to gather response information from.
+     * @return JSON String response.
      */
     private String craftResponseBody(JTracker.TorrentRef torrent, Collection<JPeer> responsePeers) {
         Map<String, Object> responseMap = new HashMap<>();

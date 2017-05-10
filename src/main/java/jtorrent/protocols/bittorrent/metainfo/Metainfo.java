@@ -128,6 +128,13 @@ public final class Metainfo implements Serializable {
         return (Metainfo) in;
     }
 
+    /**
+     * Static method that creates a Metainfo instance from a Metainfo class written to a file.
+     * @param file File containing saved Metainfo.
+     * @param announceIp IP address of the tracker server.
+     * @return Metainfo object read from {@code file}.
+     * @throws IOException
+     */
     public static Metainfo createTorrentFromFile(File file, String announceIp) throws IOException {
         if (file == null || file.isDirectory())
             return null;

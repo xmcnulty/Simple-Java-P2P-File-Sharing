@@ -37,6 +37,12 @@ public class JPeer implements java.io.Serializable {
             bytesDowloaded = 0, // number of bytes downloaded by this peer.
             bytesLeft = 0; // number of bytes left for this peer to download.
 
+    /**
+     * Constructs a new peer.
+     * @param ip Peer's IP address.
+     * @param port Port for the peer to accept incoming socket connections.
+     * @param id Unique peer identifier.
+     */
     public JPeer(String ip, int port, byte[] id) {
         if (id == null || id.length != 20)
             throw new IllegalArgumentException("Peer id must be 20 bytes.");
@@ -109,10 +115,18 @@ public class JPeer implements java.io.Serializable {
         return fieldsMap;
     }
 
+    /**
+     * Gets the state of the peer.
+     * @return
+     */
     public State getState() {
         return state;
     }
 
+    /**
+     * Updates the state of the peer.
+     * @param state
+     */
     public void setState(State state) {
         this.state = state;
     }

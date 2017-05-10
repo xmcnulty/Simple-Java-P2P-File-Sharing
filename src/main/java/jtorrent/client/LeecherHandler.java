@@ -1,9 +1,7 @@
 package jtorrent.client;
 
 import jtorrent.common.JPeer;
-import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -16,7 +14,10 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 /**
- * Requests file chunks from seeding peers.
+ * Thread that requests file chunks from seeding peers on the network.
+ * Uses an {@link Executor executor} to process incoming file chunks in parallel.
+ *
+ * @author Xavier McNulty
  * Created by Xavier on 5/1/17.
  */
 public class LeecherHandler extends Thread {
@@ -25,6 +26,11 @@ public class LeecherHandler extends Thread {
     private final Client client;
     private CountDownLatch latch;
 
+    /**
+     * Constructor.
+     * @param file {@link ChunkedFile File} for the handler to write to.
+     * @param client Owning {@link Client client} for this handler.
+     */
     public LeecherHandler(ChunkedFile file, Client client) {
         super();
         this.file = file;
@@ -33,6 +39,10 @@ public class LeecherHandler extends Thread {
         executor = Executors.newFixedThreadPool(5);
     }
 
+    /**
+     * Periodically requests file chunks to be written to {@code file} from seeding peers.
+     * Gets list of seeding peers on the network from the {@link Client Client} class.
+     */
     @Override
     public void run() {
         Set<String> remainingChunks = file.neededChunks();
@@ -75,6 +85,10 @@ public class LeecherHandler extends Thread {
         client.startSeeding();
     }
 
+    /**
+     * Private Runnable that makes a request to a seeding peer and writes the response
+     * data to the file.
+     */
     private class LeecherTask implements Runnable {
         String ip, chunkHash;
         int port;

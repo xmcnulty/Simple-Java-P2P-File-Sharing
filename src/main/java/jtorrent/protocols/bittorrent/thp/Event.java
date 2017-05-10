@@ -14,8 +14,8 @@ public enum Event {
 
     /**
      * Returns an event enumeration from a string.
-     * @param s
-     * @return
+     * @param s String representation of announce state. Case insensitive.
+     * @return Event.
      */
     public static Event fromString(String s) {
         if (s.equalsIgnoreCase(STARTED.toString()))

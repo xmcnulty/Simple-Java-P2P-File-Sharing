@@ -11,12 +11,10 @@ import org.simpleframework.http.core.ContainerSocketProcessor;
 import org.simpleframework.transport.connect.Connection;
 import org.simpleframework.transport.connect.SocketConnection;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.*;
-import java.nio.channels.SocketChannel;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -28,20 +26,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Created by Xavier on 4/30/17.
  */
 public class Client {
-    private static final String BITTORRENT_ID_PREFIX = "-TO0042-";
 
     private Connection connection;
     private final InetSocketAddress SOCKET_ADDRESS;
 
-    private final InetAddress address;
     private final JTorrent torrent;
-    private final int port;
 
     private ChunkedFile chunkedFile;
 
-    private JPeer self;
+    private final JPeer self;
 
-    private Thread announceThread, seederThread, leecherThread;
+    private Thread announceThread;
+    private Thread seederThread;
 
     private AnnounceHandlerRMI announceHandlerRMI;
 
@@ -49,10 +45,10 @@ public class Client {
 
     private ArrayList<JPeer> seedingPeers;
 
-    private Client(InetAddress address, int port, JTorrent torrent) throws IOException {
-        this.address = address;
+    private Client(InetAddress address, int port, JTorrent torrent) {
+        InetAddress address1 = address;
         this.torrent = torrent;
-        this.port = port;
+        int port1 = port;
 
         SOCKET_ADDRESS = new InetSocketAddress(address.getHostAddress(), port);
 
@@ -71,7 +67,7 @@ public class Client {
      * @param port Listening port of the client.
      * @param torrent Torrent
      * @return Client (leecher).
-     * @throws IOException
+     * @throws IOException On SocketConnection failure.
      */
     public static Client newLeecher(InetAddress address, int port, JTorrent torrent) throws IOException {
         Client c = new Client(address, port, torrent);
@@ -101,6 +97,10 @@ public class Client {
         return c;
     }
 
+    /**
+     * Starts a peer by sending announce messages to the tracker server and listening
+     * for incoming peer connections.
+     */
     public void start() {
         setState(JPeer.State.STARTED);
         System.out.println("Starting client: " + self.getPeerId());
@@ -127,30 +127,49 @@ public class Client {
 
             seederThread.start();
         } else if (!chunkedFile.isSeeding()) {
-            leecherThread = new LeecherHandler(chunkedFile, this);
+            Thread leecherThread = new LeecherHandler(chunkedFile, this);
 
             leecherThread.start();
         }
     }
 
+    /**
+     * Returns a list of seeding peers on this network. Used by the {@link LeecherHandler LeecherHandler}
+     * class.
+     * @return List of seeding peers on the network.
+     */
     public synchronized ArrayList<JPeer> getSeedingPeers() {
         return seedingPeers;
     }
 
-    public synchronized void setSeedingPeers(ArrayList<JPeer> peers) {
+    /**
+     * Used to update the list of seeding peers on this network after each announce message
+     * response from the tracker server.
+     * @param peers Updated list of seeding peers on the network.
+     */
+    private synchronized void setSeedingPeers(ArrayList<JPeer> peers) {
         seedingPeers = peers;
     }
 
+    /**
+     * Retrieves the state of this client.
+     * @return {@link JPeer.State State}
+     */
     public synchronized JPeer.State getState() {
         return self.getState();
     }
 
-    public synchronized void setState(JPeer.State state) {
+    /**
+     * Updates the state of this client.
+     * @param state {@link JPeer.State new state}
+     */
+    private synchronized void setState(JPeer.State state) {
         self.setState(state);
     }
 
     /**
-     * It is now okay to start seeding. Called by the leecher handler.
+     * Called by {@link LeecherHandler LeecherHandler} when this client is done leeching (contains the
+     * entire file) and can now start seeding.
      */
     public void startSeeding() {
         System.out.println("Now seeding");
@@ -167,14 +186,18 @@ public class Client {
             seederThread.start();
         }
     }
-    
+
+    /**
+     * Retrieve the torrent this client is using.
+     * @return {@link JTorrent JTorrent}
+     */
     public JTorrent getTorrent(){ return torrent; }
 
     /**
-     * Sends period announce messages.
+     * Private Runnable class that sends periodic announce messages to the tracker server.
      */
     private class Announcer implements Runnable {
-        private int announceIntervalSeconds = JTracker.TorrentRef.ANNOUNCE_INTERVAL_SECONDS;
+        private final int announceIntervalSeconds = JTracker.TorrentRef.ANNOUNCE_INTERVAL_SECONDS;
         private final URL url;
         private final ConcurrentMap<String, Object> jsonValues;
 
@@ -187,9 +210,12 @@ public class Client {
             jsonValues.put("peer_id", self.getPeerId());
             jsonValues.put("info_hash", torrent.infoHash());
             jsonValues.put("ip", self.getIp());
-            jsonValues.put("port", (Integer) self.getPort());
+            jsonValues.put("port", self.getPort());
         }
 
+        /**
+         * Sends period announce messages to the tracker server and processes the server's response.
+         */
         @Override
         public void run() {
             while (!stopped.get()) {
@@ -231,9 +257,11 @@ public class Client {
 
                         String respBody = in.next();
                         System.out.println(respBody);
+                        //noinspection unchecked
                         Map<String, Object> responseRoot= new Gson().fromJson(respBody, Map.class);
 
                         // update the seeding peers according to the tracker.
+                        //noinspection unchecked
                         ArrayList<LinkedTreeMap<String, Object>> seeders =
                                 (ArrayList<LinkedTreeMap<String, Object>>) responseRoot.get("peers");
 
