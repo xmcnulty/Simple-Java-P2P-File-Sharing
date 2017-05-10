@@ -1,0 +1,7 @@
+jtorrent.client
+jtorrent.cmd
+jtorrent.common
+jtorrent.gui
+jtorrent.protocols.bittorrent.metainfo
+jtorrent.protocols.bittorrent.thp
+jtorrent.tracker
