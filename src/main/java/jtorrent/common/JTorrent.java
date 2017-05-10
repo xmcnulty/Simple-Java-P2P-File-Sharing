@@ -7,6 +7,7 @@ import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -15,7 +16,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Dictionary;
 
 /**
- * A torrent to be tracked by the network's Tracker.
+ * A simple torrent implementation. Contains information about a file being shared by peers
+ * such as the file's name, size, number of chunks, chunk size, and SHA-1 hashes for each chunk.
  *
  * @author Xavier McNulty
  * Created by Xavier on 4/25/17.

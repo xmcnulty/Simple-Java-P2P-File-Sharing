@@ -5,6 +5,8 @@ import jtorrent.common.JTorrent;
 import jtorrent.common.Utils;
 import jtorrent.protocols.bittorrent.metainfo.Metainfo;
 import jtorrent.protocols.bittorrent.thp.AnnounceHandler;
+import jtorrent.protocols.bittorrent.thp.AnnounceHandlerRMI;
+import jtorrent.protocols.bittorrent.thp.AnnounceRMIServer;
 import org.simpleframework.http.core.ContainerSocketProcessor;
 import org.simpleframework.transport.connect.Connection;
 import org.simpleframework.transport.connect.SocketConnection;
@@ -34,8 +36,17 @@ public class JTracker {
     private Thread announceThread; // thread used to handle
     private Thread peerCleanupThread; // periodically cleans up expired peers
 
+    // RMI stuff
+    private AnnounceHandlerRMI announceHandlerRMI;
+    private AnnounceRMIServer announceRMIServer;
+
     private final AtomicBoolean stopped;
 
+    /**
+     * Constructs a new tracker server.
+     * @param address Socket address for the server to listen on.
+     * @throws IOException If socket connection fails.
+     */
     public JTracker(InetSocketAddress address) throws IOException {
         this.ADDRESS = address;
         TORRENTS = new ConcurrentHashMap<>();
@@ -62,6 +73,8 @@ public class JTracker {
                 }
             }
         };
+
+        announceHandlerRMI = new AnnounceHandlerRMI(TORRENTS, this);
     }
 
     /**
@@ -76,7 +89,8 @@ public class JTracker {
     }
 
     /**
-     * Starts running the tracker server.
+     * Starts running the tracker server by listening for incoming client messages on both
+     * the socket and RMI interfaces.
      */
     public void start() {
         if (announceThread == null || !announceThread.isAlive()) {
@@ -93,6 +107,16 @@ public class JTracker {
             announceThread.start();
         }
 
+        if (announceRMIServer == null || !announceRMIServer.isRunning()) {
+            try {
+                announceRMIServer = new AnnounceRMIServer(announceHandlerRMI);
+                announceRMIServer.start(ADDRESS.getPort() + 1);
+            } catch (Exception e) {
+                System.out.println("Unable to start RMI server.");
+                e.printStackTrace();
+            }
+        }
+
         if (!peerCleanupThread.isAlive()) {
             peerCleanupThread.start();
         }
@@ -102,6 +126,10 @@ public class JTracker {
      * Stops the tracker server.
      */
     public void stop() {
+
+        announceRMIServer.stop();
+        announceRMIServer = null;
+
         stopped.set(true);
 
         try {
@@ -114,7 +142,8 @@ public class JTracker {
     }
 
     /**
-     * Adds a torrent to this tracker.
+     * Adds a torrent to this tracker, called by either a {@link AnnounceHandler socket announce handler}
+     * or a {@link AnnounceHandlerRMI RMI announce handler}.
      * @param torrent Torrent
      */
     public void addTorrent(Metainfo torrent) {
@@ -132,16 +161,17 @@ public class JTracker {
     }
 
     /**
-     * Removes a torrent from this tracker.
-     * @param hash
-     * @return
+     * Removes a torrent from this tracker. called by either a {@link AnnounceHandler socket announce handler}
+     * or a {@link AnnounceHandlerRMI RMI announce handler}.
+     * @param hash SHA-1 hash of the torrent to be removed.
+     * @return Remove torrent.
      */
     public TorrentRef removeTorrent(String hash) {
         return TORRENTS.remove(hash);
     }
 
     /**
-     * A reference to a peer that this tracker is following.
+     * A class used by the server to reference a peer that is using this server.
      */
     public class PeerRef extends JPeer {
         // if a peer does not announce itself in this amount of time it will not be used by the tracker.
@@ -149,10 +179,6 @@ public class JTracker {
         private Date lastAnnounceTime = null; // set when an announce from this peer is seen
 
         JTorrent torrent; // torrent that this peer is following
-
-        private long bytesUploaded = 0, // number of bytes to uploaded by this peer.
-                bytesDowloaded = 0, // number of bytes downloaded by this peer.
-                bytesLeft = 0; // number of bytes left for this peer to downnload.
 
         /**
          * Creates a new peer reference for this tracker to follow.
@@ -323,7 +349,7 @@ public class JTracker {
                     continue;
                 }
 
-                if (p.bytesLeft == 0) // peer needs to have all of the file
+                if (p.getBytesLeft() == 0) // peer needs to have all of the file
                     validPeers.add(p);
             }
 
