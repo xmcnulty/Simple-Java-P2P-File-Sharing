@@ -5,6 +5,7 @@ import com.google.gson.internal.LinkedTreeMap;
 import jtorrent.common.JPeer;
 import jtorrent.common.JTorrent;
 import jtorrent.common.Utils;
+import jtorrent.protocols.bittorrent.thp.AnnounceHandlerRMI;
 import jtorrent.tracker.JTracker;
 import org.simpleframework.http.core.ContainerSocketProcessor;
 import org.simpleframework.transport.connect.Connection;
@@ -41,6 +42,8 @@ public class Client {
     private JPeer self;
 
     private Thread announceThread, seederThread, leecherThread;
+
+    private AnnounceHandlerRMI announceHandlerRMI;
 
     private final AtomicBoolean stopped;
 
@@ -252,6 +255,18 @@ public class Client {
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    /**
+     * Announcer that uses an RMI connection to a tracker server, rather than a socket connection.
+     *
+     * @author Xavier McNulty
+     */
+    private class AnnouncerRMI implements Runnable {
+        @Override
+        public void run() {
+
         }
     }
 }
